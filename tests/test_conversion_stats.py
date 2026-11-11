@@ -1,7 +1,12 @@
 import pytest
 from statsmodels.stats.proportion import proportion_effectsize
 
-from checkout_funnel.conversion_stats import rate_difference, rate_with_interval, sessions_per_arm
+from checkout_funnel.conversion_stats import (
+    detectable_rate,
+    rate_difference,
+    rate_with_interval,
+    sessions_per_arm,
+)
 
 
 def test_wilson_interval_matches_newcombe_1998_worked_example():
@@ -64,3 +69,13 @@ def test_sessions_per_arm_grows_as_the_lift_shrinks():
 def test_sessions_per_arm_rejects_rates_it_cannot_size(baseline, target):
     with pytest.raises(ValueError):
         sessions_per_arm(baseline, target)
+
+
+def test_detectable_rate_round_trips_with_sessions_per_arm():
+    target = detectable_rate(0.60, 1500)
+    assert 0.60 < target < 0.70
+    assert sessions_per_arm(0.60, target) in (1500, 1501)
+
+
+def test_detectable_rate_shrinks_with_more_traffic():
+    assert detectable_rate(0.60, 6000) < detectable_rate(0.60, 1500)

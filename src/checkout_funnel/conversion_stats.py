@@ -80,3 +80,19 @@ def sessions_per_arm(
         effect_size=effect, alpha=alpha, power=power, ratio=1.0, alternative="two-sided"
     )
     return math.ceil(sessions)
+
+
+def detectable_rate(
+    baseline_rate: float, sessions_per_arm: int, alpha: float = 0.05, power: float = 0.8
+) -> float:
+    """The higher rate a two-sided A/B test with this many sessions per arm can reliably detect."""
+    if not 0 < baseline_rate < 1:
+        raise ValueError(f"baseline_rate must be strictly between 0 and 1, got {baseline_rate}.")
+    if sessions_per_arm < 2:
+        raise ValueError(f"sessions_per_arm must be at least 2, got {sessions_per_arm}.")
+    effect = NormalIndPower().solve_power(
+        nobs1=sessions_per_arm, alpha=alpha, power=power, ratio=1.0, alternative="two-sided"
+    )
+    # Invert Cohen's h = 2 asin(sqrt(p2)) - 2 asin(sqrt(p1)) for p2.
+    angle = min(effect / 2 + math.asin(math.sqrt(baseline_rate)), math.pi / 2)
+    return math.sin(angle) ** 2
