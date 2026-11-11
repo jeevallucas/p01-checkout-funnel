@@ -42,14 +42,23 @@ Every colour has one meaning across all pages.
 | --- | --- | --- | --- |
 | Ink | #202124 | Text and axis lines | 16.1:1 |
 | Paper | #FFFFFF | Page and chart background | - |
-| Context grey | #8C959F | Comparison segments (desktop, other mediums), gridlines are lighter | 3.0:1 (marks only) |
-| Mobile blue | #0072B2 | Mobile sessions, the segment the checkout decision is about | 5.2:1 |
-| Promotion green | #009E73 | Buyers acquired through a coupon or paid traffic; text variant #00704F | 3.4:1 marks, 6.1:1 text |
-| Drop-off vermillion | #D55E00 | The loss being sized: the worst gap and its annotation; text variant #A84300 | 3.9:1 marks, 6.1:1 text |
+| Context grey | #9AA3AD | Comparison segments (desktop, buyers without a coupon, other mediums) | 2.5:1 (marks only) |
+| Mobile blue | #0072B2 | Mobile sessions, the segment the card's question is about | 5.2:1 |
+| Promotion green | #007A5E | Buyers who used a coupon at their first purchase | 5.3:1 |
+| Drop-off vermillion | #D55E00 | The step to fund and its annotation; text variant #A84300 | 3.9:1 marks, 6.1:1 text |
 
-Supporting neutrals: muted text #59636E (6.1:1), rules #D8DEE4, table header panel #F3F5F7.
-Blue, green, and vermillion come from the Okabe-Ito colour-blind-safe set. Every coloured mark also
-carries a direct text label, so colour is never the only signal.
+Supporting neutrals: muted text #59636E (6.1:1), rules and gridlines #D8DEE4, table header panel
+#F3F5F7.
+
+Checked with the dataviz skill's palette validator (2026-11-11). Blue against grey: normal-vision
+difference 21.2, colour-blind difference 17.7. Green against grey: 22.1 and 17.6. The validator
+flags grey's low chroma and 2.5:1 contrast; both are intended, because grey means "context, not the
+point". The relief the validator asks for is in place: every mark has a direct text label and every
+chart has a table with the same numbers. The first draft used grey #8C959F and green #009E73, which
+the validator failed against each other (normal-vision difference 13.7).
+
+The report is light only. The growth lead reads it in an office, and one validated light palette
+is better than an unvalidated dark one.
 
 ## Density
 - The full funnel, seven steps by two devices with intervals, fits one laptop screen without
@@ -66,7 +75,7 @@ One left-aligned column. Prose stays at 68 characters; charts and tables may run
 | nav |  Memo title (31)                                   |
 |     |  The answer in two sentences                       |
 |     |  Recommendation 1 ...........  number + interval   |
-|     |  [ gap ladder chart, 960 px ---------------------- ]|
+|     |  [ step ladder chart, 960 px --------------------- ]|
 |     |  Recommendation 2 ...........  number + interval   |
 |     |  [ repeat-purchase bars ]                          |
 |     |  Recommendation 3 ...........  number + range      |
@@ -75,7 +84,7 @@ One left-aligned column. Prose stays at 68 characters; charts and tables may run
 | Memo title                |
 | The answer                |
 | Recommendation 1          |
-| [ gap ladder, steps as    |
+| [ step ladder, steps as   |
 |   rows, labels inside ]   |
 | ...                       |
 ```
@@ -83,10 +92,18 @@ One left-aligned column. Prose stays at 68 characters; charts and tables may run
 Pages: Memo (home), Checkout funnel, Repeat purchase, Revenue at stake, Method and data.
 
 ## One bold element
-The gap ladder on the memo page: one row per funnel step, mobile and desktop step conversion as two
-dots with 95% interval whiskers, and the widest mobile shortfall drawn in vermillion with a direct
-label in the form "<step>: mobile <n> points below desktop", filled from the measured values. Everything
-else is quiet tables and plain charts in grey and blue.
+The step ladder on the memo page: one row per funnel step, mobile (blue) and desktop (grey) step
+conversion as two dots with 95% interval whiskers. The dots sit on top of each other at every
+step, which is the first finding: there is no mobile gap. The payment step's row carries a
+vermillion band and a direct label, "38.7% of sessions stop here on every device", filled from the
+measured values, which is the second finding. Everything else is quiet tables and plain charts in
+grey, blue, and green.
+
+The first version of this brief planned to highlight "the widest mobile shortfall". The data has
+none (docs/decisions.md, 2026-11-11), so the highlight moved to the step worth funding.
+
+Each mark has an SVG title, so hovering or focusing shows its value and interval; the same values
+are in direct labels and tables, so nothing depends on hover.
 
 ## Avoid list for this project
 - Evidence's default row of KPI cards (BigValue) above an area chart; numbers always appear with
@@ -102,7 +119,7 @@ The card's starting point was "neutral greys, one blue for the selected segment,
 drop-off". Reviewed against the brief:
 - Neutral grey with one blue is the default for any analytics page. Kept, because the user compares
   one segment against the rest, but narrowed: blue now means mobile only, and a second hue (green)
-  marks promotion-acquired buyers, so the same colour never means two segments.
+  marks coupon buyers, so the same colour never means two segments.
 - "Orange" became Okabe-Ito vermillion with a darker text variant, because the usual orange
   (#E69F00) fails contrast for labels (2.3:1).
 - A dashboard grid was the obvious layout. Changed to a memo-first column, because the user's job
