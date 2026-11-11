@@ -1,0 +1,67 @@
+---
+description-meta: "Data source, definitions, interval methods, and how to reproduce every number in the report."
+title: "Method"
+pagetitle: "Method"
+---
+
+```{ojs}
+//| output: false
+import { loadResults, dataAlert, formatCount } from "./charts.js"
+
+results = loadResults({
+  coverage: FileAttachment("sources/results/profile_coverage.csv"),
+  purchases: FileAttachment("sources/results/profile_purchase_quality.csv"),
+})
+```
+
+```{ojs}
+//| classes: data-alert-slot
+dataAlert(results.missing)
+```
+
+```{ojs}
+//| output: false
+coverage = results.data.coverage[0] ?? {}
+purchases = results.data.purchases[0] ?? {}
+```
+
+## Data
+
+The source is Google's
+[GA4 obfuscated sample e-commerce dataset](https://developers.google.com/analytics/bigquery/web-ecommerce-demo-dataset)
+in BigQuery: ${formatCount(coverage.daily_tables)} daily tables from the Google Merchandise
+Store, ${formatCount(coverage.events)} events, ${formatCount(coverage.users)} users, and
+${formatCount(coverage.sessions)} sessions. Google states no licence for the data itself, so the
+repository publishes only SQL and aggregated counts, never event rows. Some fields hold placeholder
+values, and Google warns that obfuscation limits internal consistency; the
+[data profile](https://github.com/jeevallucas/p01-checkout-funnel/blob/main/docs/data-profile.md)
+measures both.
+
+## Definitions
+
+- **Session**: a user ID plus GA4's session ID. No session spans two device categories.
+- **Step conversion**: of the sessions with the previous step's event, the share that also has
+  this step's event, in any order.
+- **First-time buyer**: first purchase inside the export, by a user first seen on or after
+  1 November 2020. Buyers with no first-touch time are left out.
+- **Repeat purchase**: a purchase on a later calendar day within 30 or 60 days, counted only for
+  buyers whose whole window fits before 31 January 2021.
+- **Coupon at first purchase**: the `coupon` event parameter holds a code on the first purchase
+  day. Item-level coupons are always empty in this sample.
+- **Order**: each transaction ID once; ${formatCount(purchases.purchases_without_transaction_id)}
+  purchase events without an ID count as one order each.
+
+## Intervals
+
+Rates carry 95% Wilson intervals, which keep their coverage for small counts and for rates near
+zero or one. Differences between groups use Newcombe's hybrid score interval. Sessions from the same shopper
+are treated as independent, which makes intervals slightly narrower than they should be. Test
+sizes use the normal approximation on Cohen's h with a two-sided 5% level and 80% power.
+
+## Reproduce
+
+The SQL is in the repository's `sql/` folder. With a Google Cloud project in the BigQuery sandbox,
+`uv run pipeline all` rebuilds every file this report reads; `uv run pipeline sizing` recomputes
+revenue and test sizes from those files without Google access. The
+[decision log](https://github.com/jeevallucas/p01-checkout-funnel/blob/main/docs/decisions.md)
+records each analytical choice and the options it replaced.

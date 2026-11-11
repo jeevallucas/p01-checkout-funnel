@@ -1,0 +1,87 @@
+---
+description-meta: "Mobile and desktop shoppers convert alike at every checkout step; the payment step loses the most sessions on every device."
+title: "Checkout and repeat purchase: what to fund next quarter"
+pagetitle: "Checkout and repeat purchase"
+---
+
+```{ojs}
+//| output: false
+import {
+  loadResults,
+  dataAlert,
+  stepLadder,
+  stopShare,
+  formatPercent,
+  formatPoints,
+  formatUsd,
+  formatCount,
+} from "./charts.js"
+
+results = loadResults({
+  conversion: FileAttachment("sources/results/funnel_step_conversion.csv"),
+  gaps: FileAttachment("sources/results/funnel_mobile_gap.csv"),
+  coverage: FileAttachment("sources/results/profile_coverage.csv"),
+  couponDifference: FileAttachment("sources/results/cohort_coupon_difference.csv"),
+  paymentTest: FileAttachment("sources/results/sizing_payment_step.csv"),
+  mobileOnly: FileAttachment("sources/results/sizing_mobile_only.csv"),
+  orderCheck: FileAttachment("sources/results/funnel_checkout_order_check.csv"),
+})
+```
+
+```{ojs}
+//| classes: data-alert-slot
+dataAlert(results.missing)
+```
+
+```{ojs}
+//| output: false
+conversion = results.data.conversion
+gaps = results.data.gaps
+paymentStop = stopShare(conversion, "add_payment_info")
+sessions = results.data.coverage[0]?.sessions
+coupon30 = results.data.couponDifference.find((row) => row.window_days === 30) ?? {}
+paymentPerPoint = results.data.paymentTest[0]?.revenue_per_point_usd
+mobileBest = Math.max(...results.data.mobileOnly.map((row) => row.extra_revenue_usd))
+check = results.data.orderCheck[0] ?? {}
+shippingFirst = check.shipping_before_checkout / check.checkout_sessions
+gapLow = Math.min(...gaps.map((row) => row.gap_low))
+gapHigh = Math.max(...gaps.map((row) => row.gap_high))
+```
+
+::: {.lede}
+Mobile shoppers move through checkout at the same rate as desktop shoppers. The step to fix is
+payment: ${formatPercent(paymentStop)} of sessions that add shipping details never add payment
+details, on every device.
+:::
+
+::: {.source-line}
+Google Merchandise Store GA4 sample, 1 November 2020 to 31 January 2021,
+${formatCount(sessions)} sessions. Revenue is the sample's US dollars over those 92 days.
+:::
+
+```{ojs}
+//| classes: slot-ladder
+stepLadder(Plot, conversion, {
+  width,
+  highlightStep: "add_payment_info",
+  title: `Mobile and desktop convert alike at every step; ${formatPercent(paymentStop)} stop before adding payment details`,
+  subtitle: "Share of sessions at the previous step that reach each step, with 95% intervals. Sessions, 1 Nov 2020 to 31 Jan 2021. Source: GA4 obfuscated sample e-commerce dataset.",
+})
+```
+
+## Three recommendations
+
+1. **Fund a payment-step fix for all devices, not a mobile-only fix.** Each extra point of
+   shipping-to-payment conversion is worth ${formatUsd(paymentPerPoint)} per 92 days. A
+   mobile-only fix could add at most ${formatUsd(mobileBest)}, because every mobile minus desktop
+   gap lies between ${formatPoints(gapLow)} and ${formatPoints(gapHigh)} points.
+2. **Keep coupon-led acquisition, and decide on margin.** Within 30 days,
+   ${formatPercent(coupon30.coupon_repeat_rate)} of coupon first-time buyers bought again,
+   against ${formatPercent(coupon30.no_coupon_repeat_rate)} of the rest.
+3. **Repair two tracking problems before the next funnel review.** In
+   ${formatPercent(shippingFirst)} of checkout sessions, shipping details are logged before
+   checkout begins.
+
+The [memo](memo.qmd) gives the assumption behind each number and how to test it. The other pages
+show the evidence: [checkout funnel](funnel.qmd), [repeat purchase](repeat-purchase.qmd), and
+[revenue at stake](revenue.qmd).

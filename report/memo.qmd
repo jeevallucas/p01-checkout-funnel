@@ -1,0 +1,6 @@
+---
+description-meta: "Two-page memo with three recommendations on checkout fixes and coupon-led acquisition, each with its number, assumption, and test."
+pagetitle: "Memo"
+---
+
+{{< include ../docs/memo.md >}}

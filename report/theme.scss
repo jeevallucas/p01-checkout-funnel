@@ -1,0 +1,283 @@
+/*-- scss:defaults --*/
+
+// Palette and type from docs/design-brief.md. Links use ink, not blue, because blue means mobile.
+$web-font-path: "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,400;0,600;1,400&display=swap";
+$font-family-sans-serif: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+$font-size-root: 16px;
+$font-size-base: 1rem;
+$line-height-base: 1.5;
+$headings-font-weight: 600;
+$h1-font-size: 1.9375rem;
+$h2-font-size: 1.5625rem;
+$h3-font-size: 1.25rem;
+
+$body-color: #202124;
+$body-bg: #ffffff;
+$link-color: #202124;
+$link-decoration: underline;
+$text-muted: #59636e;
+$border-color: #d8dee4;
+
+$navbar-bg: #ffffff;
+$navbar-fg: #202124;
+$navbar-hl: #202124;
+
+/*-- scss:rules --*/
+
+body {
+  font-feature-settings: "kern";
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+#title-block-header .title,
+main h1 {
+  font-size: $h1-font-size;
+  margin-bottom: 0.5rem;
+}
+
+main h2 {
+  font-size: $h2-font-size;
+  margin-top: 2.5rem;
+  border-bottom: none;
+}
+
+main h3 {
+  font-size: $h3-font-size;
+  margin-top: 2rem;
+}
+
+main p,
+main li,
+.quarto-title .subtitle,
+.description {
+  max-width: 68ch;
+}
+
+.lede {
+  font-size: 1.25rem;
+  line-height: 1.45;
+  max-width: 60ch;
+}
+
+.source-line {
+  color: $text-muted;
+  font-size: 0.875rem;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid #202124;
+  outline-offset: 2px;
+}
+
+.navbar {
+  border-bottom: 1px solid $border-color;
+}
+
+.navbar .nav-link {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.navbar .nav-link.active {
+  text-decoration: underline;
+  text-underline-offset: 6px;
+  text-decoration-thickness: 2px;
+}
+
+// Charts: title states the finding, subtitle gives unit, period, and source.
+.chart {
+  margin: 1.5rem 0 2rem;
+}
+
+.chart-title {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  margin: 0;
+  max-width: 68ch;
+}
+
+.chart-subtitle {
+  color: $text-muted;
+  font-size: 0.875rem;
+  margin: 0.25rem 0 0.75rem;
+  max-width: 68ch;
+}
+
+.chart svg {
+  font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
+  font-size: 13px;
+  overflow: visible;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+}
+
+.chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.chart-legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+// Tables carry the exact numbers behind each chart.
+.table-block {
+  margin: 1.5rem 0 2rem;
+}
+
+.table-caption {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  text-align: left;
+  max-width: 68ch;
+}
+
+.scroll-hint {
+  display: none;
+  color: $text-muted;
+  font-weight: 400;
+}
+
+.table-block.scrolls .scroll-hint {
+  display: inline;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.table-wrap:focus-visible {
+  outline-offset: 4px;
+}
+
+table.data-table {
+  border-collapse: collapse;
+  font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  min-width: 100%;
+}
+
+table.data-table th {
+  background: #f3f5f7;
+  font-weight: 600;
+  text-align: left;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+table.data-table th,
+table.data-table td {
+  border-bottom: 1px solid $border-color;
+  padding: 0.4rem 0.75rem 0.4rem 0;
+}
+
+table.data-table th:first-child,
+table.data-table td:first-child {
+  padding-left: 0.5rem;
+}
+
+table.data-table td:first-child {
+  white-space: nowrap;
+}
+
+table.data-table .numeric {
+  text-align: right;
+  white-space: nowrap;
+}
+
+table.data-table tr.highlight td {
+  background: rgba(213, 94, 0, 0.08);
+}
+
+// Charts and tables render after their CSV files load; reserving their height keeps the text
+// below from jumping when they appear.
+.slot-ladder {
+  min-height: 600px;
+}
+
+.slot-gap {
+  min-height: 470px;
+}
+
+.slot-repeat,
+.slot-revenue {
+  min-height: 600px;
+}
+
+.slot-table {
+  min-height: 280px;
+}
+
+@media (max-width: 575px) {
+  .slot-ladder,
+  .slot-repeat,
+  .slot-revenue {
+    min-height: 680px;
+  }
+}
+
+// The alert cell shows a pending placeholder before it settles to an empty element; a fixed
+// minimum height stops that from moving the page twice.
+.data-alert-slot {
+  min-height: 1.5rem;
+}
+
+// Shown once at the top of a page when its data files fail to load.
+.data-error {
+  border-left: 4px solid #d55e00;
+  background: #fdf3ec;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0 1.5rem;
+  max-width: 68ch;
+}
+
+.data-error p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.data-error-title {
+  font-weight: 600;
+  margin-bottom: 0.25rem !important;
+}
+
+.chart-empty {
+  color: $text-muted;
+  border: 1px solid $border-color;
+  padding: 1rem;
+  max-width: 68ch;
+}
+
+// File names in the memo's source table are long; let them wrap on a phone.
+main td code {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 575px) {
+  .lede {
+    font-size: 1.125rem;
+  }
+}

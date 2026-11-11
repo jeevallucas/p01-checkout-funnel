@@ -1,0 +1,130 @@
+---
+description-meta: "Step conversion by device with 95% intervals, and the mobile minus desktop gap at every checkout step."
+title: "Checkout funnel"
+pagetitle: "Checkout funnel"
+---
+
+```{ojs}
+//| output: false
+import {
+  loadResults,
+  dataAlert,
+  gapChart,
+  dataTable,
+  formatPercent,
+  formatPoints,
+  formatCount,
+  intervalText,
+  STEP_LABELS,
+} from "./charts.js"
+
+results = loadResults({
+  conversion: FileAttachment("sources/results/funnel_step_conversion.csv"),
+  gaps: FileAttachment("sources/results/funnel_mobile_gap.csv"),
+  orderCheck: FileAttachment("sources/results/funnel_checkout_order_check.csv"),
+})
+```
+
+```{ojs}
+//| classes: data-alert-slot
+dataAlert(results.missing)
+```
+
+```{ojs}
+//| output: false
+conversion = results.data.conversion
+gaps = results.data.gaps
+widestGap = gaps.reduce((worst, row) => (row.gap_low < worst.gap_low ? row : worst), {
+  gap_low: Infinity,
+})
+widestStep = STEP_LABELS.get(widestGap.step_name)?.toLowerCase() ?? "—"
+widestShortfall = formatPoints(Math.abs(widestGap.gap_low))
+check = results.data.orderCheck[0] ?? {}
+```
+
+::: {.lede}
+No step converts mobile shoppers worse than desktop shoppers by more than the noise allows. The
+largest shortfall the data still allows is ${widestShortfall} points, at ${widestStep}.
+:::
+
+Each step is measured on its own: of the sessions that had the previous step's event, the share
+that also had this step's event, in any order. The sample's timestamps cannot order the checkout
+steps (see [method](method.qmd)), so the rates are not multiplied into one session-to-purchase
+rate.
+
+```{ojs}
+//| classes: slot-gap
+gapChart(Plot, gaps, {
+  width,
+  title: "Every mobile minus desktop gap has an interval that crosses zero",
+  subtitle: "Difference in step conversion, percentage points, with 95% Newcombe intervals. Sessions, 1 Nov 2020 to 31 Jan 2021.",
+})
+```
+
+```{ojs}
+//| classes: slot-table
+devices = [
+  { key: "mobile", label: "Mobile" },
+  { key: "desktop", label: "Desktop" },
+  { key: "tablet", label: "Tablet" },
+]
+byStep = conversion.length === 0 ? [] : [...STEP_LABELS.keys()].map((stepName) => {
+  const row = { step: STEP_LABELS.get(stepName), stepName }
+  for (const { key } of devices) {
+    row[key] = conversion.find((r) => r.step_name === stepName && r.device_category === key) ?? {}
+  }
+  return row
+})
+
+dataTable({
+  caption: "Step conversion by device, with 95% Wilson intervals",
+  rows: byStep,
+  highlight: (row) => row.stepName === "add_payment_info",
+  columns: [
+    { label: "Step", value: (row) => row.step },
+    ...devices.flatMap(({ key, label }) => [
+      { label, value: (row) => formatPercent(row[key].conversion), numeric: true },
+      {
+        label: `${label} interval`,
+        value: (row) => intervalText(row[key].conversion_low, row[key].conversion_high),
+        numeric: true,
+      },
+      {
+        label: `${label} sessions`,
+        value: (row) => formatCount(row[key].sessions_entered),
+        numeric: true,
+      },
+    ]),
+  ],
+})
+```
+
+```{ojs}
+//| classes: slot-table
+dataTable({
+  caption: "Mobile minus desktop, percentage points",
+  rows: gaps,
+  highlight: (row) => row.step_name === "add_payment_info",
+  columns: [
+    { label: "Step", value: (row) => STEP_LABELS.get(row.step_name) },
+    { label: "Mobile", value: (row) => formatPercent(row.mobile_conversion), numeric: true },
+    { label: "Desktop", value: (row) => formatPercent(row.desktop_conversion), numeric: true },
+    { label: "Gap", value: (row) => formatPoints(row.gap), numeric: true },
+    {
+      label: "95% interval",
+      value: (row) => `${formatPoints(row.gap_low)} to ${formatPoints(row.gap_high)}`,
+      numeric: true,
+    },
+  ],
+})
+```
+
+## Why the funnel ignores event order
+
+In ${formatPercent(check.shipping_before_checkout / check.checkout_sessions)} of
+${formatCount(check.checkout_sessions)} checkout sessions, the first shipping event is
+timestamped before checkout begins. In
+${formatPercent(check.purchases_without_add_to_cart / check.purchase_sessions)} of purchasing
+sessions there is no add-to-cart event, because the cart was filled in an earlier visit. A funnel
+that requires every earlier step in order would drop both groups and report drop-off that never
+happened; the step-pair rule counts them from checkout onward.

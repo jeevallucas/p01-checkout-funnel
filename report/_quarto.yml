@@ -1,0 +1,47 @@
+project:
+  type: website
+  output-dir: _site
+  resources:
+    - sources/results/*.csv
+    - charts.js
+
+website:
+  title: "Checkout analysis"
+  search: false
+  site-url: https://jeevallucas.github.io/p01-checkout-funnel/
+  repo-url: https://github.com/jeevallucas/p01-checkout-funnel
+  page-navigation: false
+  navbar:
+    collapse-below: lg
+    left:
+      - text: Overview
+        href: index.qmd
+      - text: Memo
+        href: memo.qmd
+      - text: Checkout funnel
+        href: funnel.qmd
+      - text: Repeat purchase
+        href: repeat-purchase.qmd
+      - text: Revenue at stake
+        href: revenue.qmd
+      - text: Method
+        href: method.qmd
+    right:
+      - text: Source code
+        href: https://github.com/jeevallucas/p01-checkout-funnel
+
+format:
+  html:
+    theme: [cosmo, theme.scss]
+    toc: false
+    page-layout: article
+    grid:
+      body-width: 960px
+    lang: en
+    smooth-scroll: false
+    anchor-sections: false
+    link-external-icon: false
+    link-external-newwindow: false
+
+execute:
+  echo: false

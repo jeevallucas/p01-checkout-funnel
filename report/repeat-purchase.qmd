@@ -1,0 +1,124 @@
+---
+description-meta: "Repeat purchase within 30 and 60 days for first-time buyers, by coupon use and acquisition medium."
+title: "Repeat purchase"
+pagetitle: "Repeat purchase"
+---
+
+```{ojs}
+//| output: false
+import {
+  loadResults,
+  dataAlert,
+  repeatChart,
+  dataTable,
+  segmentLabel,
+  SEGMENT_LABELS,
+  formatPercent,
+  formatPoints,
+  formatCount,
+  intervalText,
+} from "./charts.js"
+
+results = loadResults({
+  cohorts: FileAttachment("sources/results/cohort_repeat_purchase.csv"),
+  couponDifference: FileAttachment("sources/results/cohort_coupon_difference.csv"),
+  mediumCheck: FileAttachment("sources/results/profile_user_acquisition_consistency.csv"),
+})
+```
+
+```{ojs}
+//| classes: data-alert-slot
+dataAlert(results.missing)
+```
+
+```{ojs}
+//| output: false
+cohorts = results.data.cohorts
+couponDifference = results.data.couponDifference
+overall30 = cohorts.find((row) => row.split === "all" && row.window_days === 30) ?? {}
+overall60 = cohorts.find((row) => row.split === "all" && row.window_days === 60) ?? {}
+coupon30 = couponDifference.find((row) => row.window_days === 30) ?? {}
+mediumCheck = results.data.mediumCheck[0] ?? {}
+unstableBuyers = mediumCheck.buyers_with_several_mediums / mediumCheck.buyers
+```
+
+::: {.lede}
+Coupon buyers come back at least as often as other first-time buyers:
+${formatPercent(coupon30.coupon_repeat_rate)} against
+${formatPercent(coupon30.no_coupon_repeat_rate)} within 30 days. The difference,
+${formatPoints(coupon30.difference)} points, has an interval from
+${formatPoints(coupon30.difference_low)} to ${formatPoints(coupon30.difference_high)}.
+:::
+
+Repeat purchase is low for everyone: ${formatPercent(overall30.repeat_rate)} of
+${formatCount(overall30.first_time_buyers)} first-time buyers bought again within 30 days, and
+${formatPercent(overall60.repeat_rate)} of ${formatCount(overall60.first_time_buyers)} within 60
+days. A first-time buyer was first seen inside the export; a repeat is a purchase on a later day.
+A buyer counts toward a window only if the whole window fits before 31 January 2021, so the 60-day
+rate rests on November buyers only.
+
+```{ojs}
+//| classes: slot-repeat
+repeatChart(Plot, cohorts, {
+  width,
+  windowDays: 30,
+  title: `Coupon buyers repeat at ${formatPercent(coupon30.coupon_repeat_rate)} within 30 days; no segment differs clearly from the ${formatPercent(overall30.repeat_rate)} average`,
+  subtitle: "Share of first-time buyers who bought again within 30 days, with 95% Wilson intervals. First purchases 1 Nov 2020 to 1 Jan 2021.",
+})
+```
+
+The medium split is weaker than the coupon split. GA4 defines the medium as the user's first
+touch, which should never change, yet ${formatPercent(unstableBuyers)} of buyers carry more than
+one. Each buyer's medium here is the one on their earliest event.
+
+```{ojs}
+//| classes: slot-table
+segmentRows = cohorts.length === 0 ? [] : [...SEGMENT_LABELS.keys()]
+  .filter((segment) => cohorts.some((row) => row.segment === segment))
+  .map((segment) => ({
+    label: segmentLabel(segment),
+    days30: cohorts.find((row) => row.segment === segment && row.window_days === 30) ?? {},
+    days60: cohorts.find((row) => row.segment === segment && row.window_days === 60) ?? {},
+  }))
+
+dataTable({
+  caption: "Repeat purchase by segment, with 95% Wilson intervals",
+  rows: segmentRows,
+  columns: [
+    { label: "Segment", value: (row) => row.label },
+    { label: "Buyers, 30 days", value: (row) => formatCount(row.days30.first_time_buyers), numeric: true },
+    { label: "Repeat, 30 days", value: (row) => formatPercent(row.days30.repeat_rate), numeric: true },
+    {
+      label: "30-day interval",
+      value: (row) => intervalText(row.days30.repeat_rate_low, row.days30.repeat_rate_high),
+      numeric: true,
+    },
+    { label: "Buyers, 60 days", value: (row) => formatCount(row.days60.first_time_buyers), numeric: true },
+    { label: "Repeat, 60 days", value: (row) => formatPercent(row.days60.repeat_rate), numeric: true },
+    {
+      label: "60-day interval",
+      value: (row) => intervalText(row.days60.repeat_rate_low, row.days60.repeat_rate_high),
+      numeric: true,
+    },
+  ],
+})
+```
+
+```{ojs}
+//| classes: slot-table
+dataTable({
+  caption: "Coupon minus no coupon, repeat purchase in percentage points",
+  rows: couponDifference,
+  columns: [
+    { label: "Window", value: (row) => `${row.window_days} days` },
+    { label: "Coupon", value: (row) => formatPercent(row.coupon_repeat_rate), numeric: true },
+    { label: "No coupon", value: (row) => formatPercent(row.no_coupon_repeat_rate), numeric: true },
+    { label: "Difference", value: (row) => formatPoints(row.difference), numeric: true },
+    {
+      label: "95% interval",
+      value: (row) => `${formatPoints(row.difference_low)} to ${formatPoints(row.difference_high)}`,
+      numeric: true,
+    },
+  ],
+})
+```
