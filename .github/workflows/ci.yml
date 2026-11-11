@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+      - name: Install locked dependencies
+        run: uv sync --locked
+      - name: Python format
+        run: uv run ruff format --check src tests
+      - name: Python lint
+        run: uv run ruff check src tests
+      - name: SQL lint
+        run: uv run sqlfluff lint sql
+      - name: Tests
+        run: uv run pytest -q
