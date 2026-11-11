@@ -26,7 +26,9 @@ def bigquery_client() -> bigquery.Client:
 def run_sql_file(client: bigquery.Client, sql_path: Path) -> pd.DataFrame:
     job_config = bigquery.QueryJobConfig(maximum_bytes_billed=MAX_BYTES_BILLED)
     job = client.query(sql_path.read_text(encoding="utf-8"), job_config=job_config)
-    result = job.result().to_dataframe()
+    # Results are a few hundred rows at most, so the REST download is enough; the BigQuery
+    # Storage API client would only add a dependency.
+    result = job.result().to_dataframe(create_bqstorage_client=False)
     gigabytes = (job.total_bytes_processed or 0) / 10**9
     print(f"{sql_path.name}: {len(result)} rows, {gigabytes:.2f} GB processed")
     return result

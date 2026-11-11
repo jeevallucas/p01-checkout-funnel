@@ -1,0 +1,20 @@
+field_name,field_value,events,users
+device.category,desktop,2498330,158917
+device.category,mobile,1704069,109195
+device.category,tablet,93185,6250
+traffic_source.medium,organic,1439399,112358
+traffic_source.medium,(none),989684,75951
+traffic_source.medium,referral,778087,55495
+traffic_source.medium,<Other>,597482,51038
+traffic_source.medium,(data deleted),313917,18204
+traffic_source.medium,cpc,177015,15528
+traffic_source.name,(organic),1439399,112358
+traffic_source.name,(direct),989684,75951
+traffic_source.name,<Other>,782379,66287
+traffic_source.name,(referral),778077,55494
+traffic_source.name,(data deleted),306045,17896
+traffic_source.source,google,1500418,117476
+traffic_source.source,<Other>,1131013,90751
+traffic_source.source,(direct),989684,75951
+traffic_source.source,shop.googlemerchandisestore.com,365774,26065
+traffic_source.source,(data deleted),308695,17951

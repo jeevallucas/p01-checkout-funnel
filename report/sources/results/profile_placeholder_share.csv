@@ -1,0 +1,16 @@
+field_name,value_class,events
+device.category,real value,4295584
+device.operating_system,real value,4185261
+device.operating_system,<Other>,110323
+event_params.ga_session_id,real value,4295584
+geo.country,real value,4263376
+geo.country,(not set),32208
+traffic_source.medium,real value,3384185
+traffic_source.medium,<Other>,597482
+traffic_source.medium,(data deleted),313917
+traffic_source.name,real value,3207160
+traffic_source.name,<Other>,782379
+traffic_source.name,(data deleted),306045
+traffic_source.source,real value,2855876
+traffic_source.source,<Other>,1131013
+traffic_source.source,(data deleted),308695

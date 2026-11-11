@@ -1,5 +1,5 @@
 -- The most common values of the grouping fields, with user counts, to decide how to bucket them.
-with field_value as (
+with grouping_field as (
     select
         events.user_pseudo_id,
         field.field_name,
@@ -19,7 +19,7 @@ value_count as (
         coalesce(field_value, 'NULL') as shown_value,
         count(*) as events,
         count(distinct user_pseudo_id) as users
-    from field_value
+    from grouping_field
     group by field_name, shown_value
 ),
 

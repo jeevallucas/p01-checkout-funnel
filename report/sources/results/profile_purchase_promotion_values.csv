@@ -1,0 +1,20 @@
+field_name,field_value,purchase_events
+event_params.coupon,NULL,2617
+event_params.coupon,9061878488185602918,1450
+event_params.coupon,8263519522984318829,1011
+event_params.coupon,7365791999877465472,614
+event_params.promotion_name,NULL,3422
+event_params.promotion_name,reach new heights,1052
+event_params.promotion_name,act responsible,442
+event_params.promotion_name,google mural collection,402
+event_params.promotion_name,complete your collection,374
+items.coupon (first item),(not set),5690
+items.coupon (first item),NULL,2
+items.promotion_name (first item),,2697
+items.promotion_name (first item),(not set),1383
+items.promotion_name (first item),Reach New Heights,633
+items.promotion_name (first item),Act Responsible,259
+items.promotion_name (first item),Complete Your Collection,251
+items.promotion_name (first item),Not available in demo dataset,249
+items.promotion_name (first item),Google Mural Collection,218
+items.promotion_name (first item),NULL,2

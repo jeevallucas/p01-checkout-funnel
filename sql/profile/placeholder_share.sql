@@ -2,7 +2,7 @@
 -- Google documents <Other>, NULL, and '' as placeholders; '(not set)' and '(data deleted)' are
 -- also counted because GA4 exports use them for missing attribution.
 -- The fields are unpivoted inside one scan so the table is read once.
-with field_value as (
+with grouping_field as (
     select
         field.field_name,
         field.field_value
@@ -36,6 +36,6 @@ select
         else 'real value'
     end as value_class,
     count(*) as events
-from field_value
+from grouping_field
 group by field_name, value_class
 order by field_name asc, events desc

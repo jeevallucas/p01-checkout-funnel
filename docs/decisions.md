@@ -94,3 +94,21 @@ revisit it.
 - `python-dotenv` reads `GCP_PROJECT_ID` from `.env`, so no project ID is typed into commands.
 - `duckdb` (dev only) runs the shared SQL against test fixtures; see the testing decision above.
 - `sqlfluff` (dev only) lints SQL, as the workspace standard asks.
+
+## 2026-11-11 Cohort definitions, set by the data profile
+
+- Context: the profile (docs/data-profile.md) shows that `traffic_source.medium` changes across
+  a user's events for 70.5% of buyers, that item-level coupons are always `(not set)`, and that
+  20.6% of buyers were first seen before the window.
+- Options for the medium: (a) the medium on the first purchase event; (b) the medium on the
+  user's earliest event in the window; (c) drop the medium split and keep coupon use only.
+- Decision: (b), with placeholders as an "unknown" row, because the earliest event is the closest
+  thing to a first touch that the sample offers. The memo states that this split is weaker than
+  the coupon split. Coupon use comes from the `coupon` event parameter on the first purchase
+  event. A first-time buyer is a user first seen on or after 2020-11-01. A repeat is a purchase on
+  a later calendar day within 30 or 60 days.
+- Consequences: the medium comparison carries a caveat in every place it appears. Same-day second
+  orders are not counted, which makes repeat rates slightly conservative but immune to the 335
+  purchase events that repeat a transaction ID.
+- Revisit if: a version of the sample with a stable first-touch field appears, or the coupon
+  parameter turns out to be set by something other than a shopper's code.
