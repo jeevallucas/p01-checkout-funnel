@@ -78,7 +78,7 @@ reads.
   flattening is checked by reconciliation against real data instead of by fixtures.
 - **Quarto and committed CSV files, over Evidence.** Evidence's template now deprecates its
   open-source build in favour of a hosted service, and the report must be a static page. Cost:
-  numbers render in the browser, which shifts the layout once on three pages.
+  numbers render in the browser after the CSV files load, so the pages need JavaScript.
 
 Placeholder values: `<Other>` and `(data deleted)` mediums become an "unknown" segment that stays
 in the totals; purchase events without a transaction ID count as one order each, and a repeated
@@ -127,8 +127,6 @@ work tables. 45 tests pass, including interval values checked against Newcombe (
 - Next: a browser-level funnel to size cart-to-checkout loss across visits, a user-clustered
   bootstrap for the intervals, and a survival model for repeat purchase that uses buyers whose
   window the export cuts off.
-- The report computes its prose numbers in the browser, which shifts the layout once (CLS about
-  0.2) on three pages; computing them at build time would remove it.
 
 ## Run it locally
 
@@ -173,7 +171,8 @@ committed, and stops with a message if the reconciliation fails.
 The report is memo-first: a single column for a growth lead who reads it on a laptop before a
 planning meeting, with one chart, the step ladder, carrying the main finding. Blue means mobile,
 green coupon buyers, vermillion the step worth funding, grey everything else, and every chart has
-a table with the same numbers. axe reports no violations at 375, 768, and 1440 px. The brief,
+a table with the same numbers. axe reports no violations at 375, 768, and 1440 px, and Lighthouse
+on the live site scores 96 to 98 for performance and 100 for accessibility on every page. The brief,
 review rounds, and Lighthouse scores are in [docs/design-brief.md](docs/design-brief.md) and
 [docs/design-review.md](docs/design-review.md).
 

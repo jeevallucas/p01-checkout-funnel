@@ -94,3 +94,20 @@ and on mobile only; its reserved height was cut from 600 to 440 px to match. The
 title and lede now describe a null result as a range. All 18 page and width combinations were
 captured again: axe 0 violations, no sideways scroll. Screenshots and the demo were re-recorded so
 their numbers match the current result files.
+
+## Lighthouse on the deployed site (2026-11-11)
+
+Same settings, against https://jeevallucas.github.io/p01-checkout-funnel/, which GitHub Pages
+serves compressed.
+
+| Page | Performance | Accessibility | Best practices | SEO | CLS | LCP |
+| --- | --- | --- | --- | --- | --- | --- |
+| index | 96 | 100 | 100 | 100 | 0.008 | 2.2 s |
+| memo | 98 | 100 | 100 | 100 | 0.008 | 2.0 s |
+| funnel | 98 | 100 | 100 | 100 | 0.011 | 2.0 s |
+| repeat-purchase | 97 | 100 | 100 | 100 | 0.008 | 2.0 s |
+| revenue | 97 | 100 | 100 | 100 | 0 | 2.0 s |
+| method | 98 | 100 | 100 | 100 | 0.009 | 2.0 s |
+
+The layout shift of about 0.2 measured locally on three pages does not appear on the deployed
+site, so the build-time rendering listed under "Not fixed" is no longer needed.
