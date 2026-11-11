@@ -19,6 +19,16 @@ counts are for the full export, `events_20201101` to `events_20210131`.
 - 4,848 sessions contain a purchase; only 3 of them have no `begin_checkout`. The checkout events
   are tagged in order, so an ordered funnel loses almost nothing.
 
+## Event order inside a session
+Measured by `sql/shared/checkout_order_check.sql` on the session table that `uv run pipeline
+funnel` builds (`funnel_checkout_order_check.csv`):
+- In 6,862 of 11,106 checkout sessions (61.8%), the first `add_shipping_info` is timestamped
+  before the first `begin_checkout`.
+- 2,000 of 4,848 purchasing sessions (41.3%) have no `add_to_cart`, and 150 (3.1%) have no
+  `view_item`; those carts were filled in an earlier visit.
+- Timestamps therefore cannot order the checkout steps, and a funnel that requires every earlier
+  step undercounts returning shoppers.
+
 ## Funnel events (events, users)
 
 | Event | Desktop | Mobile | Tablet |
@@ -75,8 +85,8 @@ touch.
   first seen before the window; the cohort rules below narrow them.
 
 ## Rules that follow from the profile
-- Funnel: ordered, session-based, starting at `session_start`; the 1.46% of sessions without it
-  are left out. Device comes from the session, which is always one category.
+- Funnel: session-based, each step pair measured on its own and in any order (see the event order
+  section). Device comes from the session, which is always one category.
 - Medium: read from the user's earliest event in the window; `<Other>` and `(data deleted)`
   become "unknown" and stay in the totals as their own row.
 - Promotion at first purchase: the `coupon` event parameter on the first purchase event.

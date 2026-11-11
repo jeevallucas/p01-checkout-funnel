@@ -1,7 +1,6 @@
-"""Run the repo's SQL files in BigQuery and return their (small) results."""
+"""Run the repo's SQL in BigQuery and return its (small) results."""
 
 import os
-from pathlib import Path
 
 import pandas as pd
 from dotenv import load_dotenv
@@ -10,6 +9,11 @@ from google.cloud import bigquery
 # The sandbox allows 1 TB of query processing per month. This cap stops a mistaken query (for
 # example an accidental cross join) from using it up in one run.
 MAX_BYTES_BILLED = 20 * 10**9
+
+# Intermediate tables live in the user's own project. The public dataset is in the US
+# multi-region, and BigQuery only joins tables stored in the same location.
+WORK_DATASET = "checkout_funnel"
+WORK_LOCATION = "US"
 
 
 def bigquery_client() -> bigquery.Client:
@@ -23,12 +27,33 @@ def bigquery_client() -> bigquery.Client:
     return bigquery.Client(project=project_id)
 
 
-def run_sql_file(client: bigquery.Client, sql_path: Path) -> pd.DataFrame:
+def run_query(client: bigquery.Client, sql: str, label: str) -> pd.DataFrame:
     job_config = bigquery.QueryJobConfig(maximum_bytes_billed=MAX_BYTES_BILLED)
-    job = client.query(sql_path.read_text(encoding="utf-8"), job_config=job_config)
+    job = client.query(sql, job_config=job_config)
     # Results are a few hundred rows at most, so the REST download is enough; the BigQuery
     # Storage API client would only add a dependency.
     result = job.result().to_dataframe(create_bqstorage_client=False)
-    gigabytes = (job.total_bytes_processed or 0) / 10**9
-    print(f"{sql_path.name}: {len(result)} rows, {gigabytes:.2f} GB processed")
+    _report(label, job, f"{len(result)} rows")
     return result
+
+
+def build_work_table(client: bigquery.Client, sql: str, table_name: str) -> str:
+    """Write a query's result to the work dataset and return the table's full ID."""
+    dataset = bigquery.Dataset(f"{client.project}.{WORK_DATASET}")
+    dataset.location = WORK_LOCATION
+    client.create_dataset(dataset, exists_ok=True)
+    table_id = f"{client.project}.{WORK_DATASET}.{table_name}"
+    job_config = bigquery.QueryJobConfig(
+        destination=table_id,
+        write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
+        maximum_bytes_billed=MAX_BYTES_BILLED,
+    )
+    job = client.query(sql, job_config=job_config)
+    job.result()
+    _report(table_name, job, f"table {table_id}")
+    return table_id
+
+
+def _report(label: str, job: bigquery.QueryJob, outcome: str) -> None:
+    gigabytes = (job.total_bytes_processed or 0) / 10**9
+    print(f"{label}: {outcome}, {gigabytes:.2f} GB processed")

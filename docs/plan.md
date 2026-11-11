@@ -15,10 +15,11 @@ Each milestone ends with a commit and a push. Done means the listed check passes
 ## 2. Checkout funnel
 - BigQuery flattening query: one row per session and funnel step, with device category and first
   timestamp.
-- Shared-SQL funnel query: sessions reaching each step in order, by device.
+- Shared-SQL funnel query: per step pair, sessions with the previous step that also have this
+  step, by device (event order is unreliable in the sample; see docs/decisions.md).
 - Python: Wilson 95% intervals for step conversion, Newcombe interval for the mobile minus desktop
   difference.
-- Fixture tests in DuckDB: ordering, repeated events, sessions that skip a step, placeholder device.
+- Fixture tests in DuckDB: order ignored, repeated events, purchases without add_to_cart, devices.
 - Done when: tests pass and `report/sources/` holds the funnel aggregates.
 
 ## 3. Repeat-purchase cohorts
@@ -28,8 +29,9 @@ Each milestone ends with a commit and a push. Done means the listed check passes
 - Done when: tests pass and the cohort aggregates are written.
 
 ## 4. Revenue at stake and memo
-- Size the gain from closing half of the worst mobile gap, as a range from the interval bounds,
-  with every assumption listed.
+- Size the most a mobile-only fix could be worth (half of the worst mobile deficit the interval
+  allows) and the gain from lifting the weakest checkout step for every device, as ranges, with
+  every assumption listed.
 - Minimum detectable effect and sessions per arm for testing the first recommendation.
 - `docs/memo.md`: two pages, exactly three recommendations, each with a number, its assumption, and
   how to test it.

@@ -112,3 +112,41 @@ revisit it.
   purchase events that repeat a transaction ID.
 - Revisit if: a version of the sample with a stable first-touch field appears, or the coupon
   parameter turns out to be set by something other than a shopper's code.
+
+## 2026-11-11 Replace the ordered funnel with per-step pairs that ignore event order
+
+- Context: the first funnel run used the ordered rule recorded above. Only 1,776 of the 4,848
+  purchasing sessions passed it. `checkout_order_check.sql` shows why: in 6,862 of 11,106 checkout
+  sessions (61.8%) the first `add_shipping_info` is timestamped before the first `begin_checkout`,
+  and 2,000 of 4,848 purchasing sessions (41.3%) have no `add_to_cart`, because the cart was
+  filled in an earlier visit. The ordered rule turned both into drop-off that did not happen.
+- Options: (a) keep the ordered rule and report the artefact; (b) a closed funnel that requires
+  every earlier step in any order; (c) measure each step pair on its own: of the sessions with the
+  previous step's event, the share that also has this step's event, in any order.
+- Decision: (c). It answers "where do sessions stop" without trusting the sample's timestamps,
+  and a returning shopper who checks out without re-adding to cart still counts from
+  begin_checkout onward. This supersedes the ordered-funnel entry above; the session as the unit
+  stays.
+- Consequences: step rates are conditional on the previous step only, so multiplying them does not
+  give the session-to-purchase rate. `add_shipping_info` follows `begin_checkout` in 99.97% or more
+  of sessions on every device, so it is not a separate place to fix. The SQL is shorter: one
+  aggregation instead of seven chained joins.
+- Revisit if: a sample with reliable timestamps is used, where order carries information.
+
+## 2026-11-11 No mobile gap: reframe the first recommendation and the sizing
+
+- Context: the card assumes some checkout step loses more mobile than desktop shoppers. The
+  measured gaps (mobile minus desktop) all have 95% intervals that include zero. The most a mobile
+  deficit can be at any step, by the interval's lower bound, is 1.2 points (purchase after
+  payment); at payment after shipping it is 0.6 points.
+- Options: (a) report the largest point estimate as "the worst mobile step"; (b) state that the
+  data rules out a mobile-specific problem, and size two things instead: the most a mobile-only
+  fix could be worth (half of the interval's worst case, as the card's sizing rule asks), and the
+  gain from lifting the weakest checkout step for all devices.
+- Decision: (b). Option (a) would present noise as a finding, which is the error the intervals
+  exist to prevent. The first recommendation becomes "do not fund a mobile-only checkout fix; fund
+  the shipping-to-payment step for every device", with its A/B test size.
+- Consequences: milestone 4 sizes both scenarios. The memo explains why the absence of a gap is
+  itself the decision-relevant result.
+- Revisit if: a sample from after the store's checkout changes, or with more mobile sessions,
+  shows an interval that excludes zero.
