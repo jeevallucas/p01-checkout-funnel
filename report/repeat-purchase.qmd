@@ -43,7 +43,7 @@ unstableBuyers = mediumCheck.buyers_with_several_mediums / mediumCheck.buyers
 ```
 
 ::: {.lede}
-Coupon buyers come back at least as often as other first-time buyers:
+Coupon buyers came back no less often than other first-time buyers:
 ${formatPercent(coupon30.coupon_repeat_rate)} against
 ${formatPercent(coupon30.no_coupon_repeat_rate)} within 30 days. The difference,
 ${formatPoints(coupon30.difference)} points, has an interval from

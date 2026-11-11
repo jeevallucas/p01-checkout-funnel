@@ -405,43 +405,31 @@ export function repeatChart(Plot, cohorts, { width, windowDays, title, subtitle 
   return figure({ title, subtitle, plot });
 }
 
-// Revenue at stake per 92 days: the payment-step test's detectable win against the best case
-// for a mobile-only fix at each step.
-export function revenueChart(Plot, { mobileOnly, paymentTest }, { width, title, subtitle }) {
-  if (!paymentTest || mobileOnly.length === 0) return figure({ title, subtitle });
-  // Short labels on phones keep each label on one line above its bar.
-  const narrow = width < 560;
-  const rows = [
-    {
-      label: narrow
-        ? "Payment step, all devices"
-        : `Payment step, all devices, smallest win an ${paymentTest.test_weeks}-week test detects`,
-      value: paymentTest.revenue_at_detectable_lift_usd,
-      color: COLORS.drop,
-      highlighted: true,
-    },
-    ...mobileOnly.map((row) => ({
-      label: narrow
-        ? `Mobile only: ${STEP_LABELS.get(row.step_name).toLowerCase()}`
-        : `Mobile-only fix at ${STEP_LABELS.get(row.step_name).toLowerCase()}, best case`,
-      value: row.extra_revenue_usd,
-      color: COLORS.context,
-      highlighted: false,
-    })),
-  ].sort((a, b) => b.value - a.value);
+// The smallest payment-step lift an A/B test detects, all devices against mobile only, at the
+// 92-day average traffic and at January's quieter pace.
+export function testReachChart(Plot, tests, { width, weeks, title, subtitle }) {
+  const rows = tests
+    .filter((row) => row.test_weeks === weeks)
+    .map((row) => ({
+      ...row,
+      label: `${row.scope === "all devices" ? "All devices" : "Mobile only"}, ${row.traffic_pace}`,
+      color: row.scope === "all devices" ? COLORS.drop : COLORS.mobile,
+      highlighted: row.scope === "all devices",
+    }));
+  if (rows.length === 0) return figure({ title, subtitle });
   const plot = Plot.plot({
     width,
-    height: rows.length * 54 + 48,
+    height: rows.length * 58 + 48,
     marginLeft: 8,
-    marginRight: 64,
+    marginRight: 72,
     marginTop: 28,
     marginBottom: 40,
     ariaLabel: title,
     ariaDescription: subtitle,
     x: {
-      tickFormat: formatUsd,
-      ticks: width < 560 ? 3 : 5,
-      label: "US dollars per 92 days",
+      domain: [0, 10],
+      ticks: 5,
+      label: "Smallest detectable lift, percentage points",
       labelAnchor: "left",
       labelArrow: "none",
     },
@@ -452,12 +440,15 @@ export function revenueChart(Plot, { mobileOnly, paymentTest }, { width, title, 
       paddingOuter: 0.3,
     },
     marks: [
-      Plot.gridX({ stroke: COLORS.rule, strokeOpacity: 1, ticks: width < 560 ? 3 : 5 }),
+      Plot.gridX({ stroke: COLORS.rule, strokeOpacity: 1, ticks: 5 }),
       Plot.barX(rows, {
         y: "label",
-        x: "value",
+        x: "detectable_lift_points",
         fill: "color",
-        title: (row) => `${row.label}: ${formatUsd(row.value)}`,
+        title: (row) =>
+          `${row.label}: ${row.detectable_lift_points.toFixed(1)} points with ${formatCount(
+            row.sessions_per_arm,
+          )} sessions per arm`,
       }),
       Plot.ruleX([0], { stroke: COLORS.ink }),
       ...[true, false].map((highlighted) =>
@@ -470,7 +461,7 @@ export function revenueChart(Plot, { mobileOnly, paymentTest }, { width, title, 
             dy: -18,
             text: "label",
             textAnchor: "start",
-            lineWidth: labelEms(width, 72),
+            lineWidth: labelEms(width, 80),
             fill: highlighted ? COLORS.dropText : COLORS.ink,
             fontWeight: highlighted ? 600 : 400,
             ...halo,
@@ -479,15 +470,23 @@ export function revenueChart(Plot, { mobileOnly, paymentTest }, { width, title, 
       ),
       Plot.text(rows, {
         y: "label",
-        x: "value",
+        x: "detectable_lift_points",
         dx: 6,
-        text: (row) => formatUsd(row.value),
+        text: (row) => `${row.detectable_lift_points.toFixed(1)} points`,
         textAnchor: "start",
         fill: COLORS.ink,
       }),
     ],
   });
-  return figure({ title, subtitle, plot });
+  return figure({
+    title,
+    subtitle,
+    legend: [
+      { label: "All devices", color: COLORS.drop },
+      { label: "Mobile only", color: COLORS.mobile },
+    ],
+    plot,
+  });
 }
 
 // A plain table: columns are { label, value(row), numeric }. The caption sits outside the

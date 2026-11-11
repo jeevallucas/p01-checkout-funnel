@@ -23,7 +23,6 @@ results = loadResults({
   coverage: FileAttachment("sources/results/profile_coverage.csv"),
   couponDifference: FileAttachment("sources/results/cohort_coupon_difference.csv"),
   paymentTest: FileAttachment("sources/results/sizing_payment_step.csv"),
-  mobileOnly: FileAttachment("sources/results/sizing_mobile_only.csv"),
   orderCheck: FileAttachment("sources/results/funnel_checkout_order_check.csv"),
 })
 ```
@@ -40,8 +39,12 @@ gaps = results.data.gaps
 paymentStop = stopShare(conversion, "add_payment_info")
 sessions = results.data.coverage[0]?.sessions
 coupon30 = results.data.couponDifference.find((row) => row.window_days === 30) ?? {}
-paymentPerPoint = results.data.paymentTest[0]?.revenue_per_point_usd
-mobileBest = Math.max(...results.data.mobileOnly.map((row) => row.extra_revenue_usd))
+pick = (scope) =>
+  results.data.paymentTest.find(
+    (r) => r.scope === scope && r.traffic_pace === "92-day average" && r.test_weeks === 8,
+  ) ?? {}
+allDevices = pick("all devices")
+mobileOnly = pick("mobile only")
 check = results.data.orderCheck[0] ?? {}
 shippingFirst = check.shipping_before_checkout / check.checkout_sessions
 gapLow = Math.min(...gaps.map((row) => row.gap_low))
@@ -49,9 +52,9 @@ gapHigh = Math.max(...gaps.map((row) => row.gap_high))
 ```
 
 ::: {.lede}
-Mobile shoppers move through checkout at the same rate as desktop shoppers. The step to fix is
-payment: ${formatPercent(paymentStop)} of sessions that add shipping details never add payment
-details, on every device.
+No checkout step shows a clear difference between mobile and desktop shoppers. Inside checkout,
+the largest loss is before payment: ${formatPercent(paymentStop)} of sessions that add shipping
+details never add payment details, on every device.
 :::
 
 ::: {.source-line}
@@ -64,21 +67,23 @@ ${formatCount(sessions)} sessions. Revenue is the sample's US dollars over those
 stepLadder(Plot, conversion, {
   width,
   highlightStep: "add_payment_info",
-  title: `Mobile and desktop convert alike at every step; ${formatPercent(paymentStop)} stop before adding payment details`,
+  title: `No step shows a clear mobile-desktop gap; ${formatPercent(paymentStop)} of checkouts stop before payment details`,
   subtitle: "Share of sessions at the previous step that reach each step, with 95% intervals. Sessions, 1 Nov 2020 to 31 Jan 2021. Source: GA4 obfuscated sample e-commerce dataset.",
 })
 ```
 
 ## Three recommendations
 
-1. **Fund a payment-step fix for all devices, not a mobile-only fix.** Each extra point of
-   shipping-to-payment conversion is worth ${formatUsd(paymentPerPoint)} per 92 days. A
-   mobile-only fix could add at most ${formatUsd(mobileBest)}, because every mobile minus desktop
-   gap lies between ${formatPoints(gapLow)} and ${formatPoints(gapHigh)} points.
-2. **Keep coupon-led acquisition, and decide on margin.** Within 30 days,
-   ${formatPercent(coupon30.coupon_repeat_rate)} of coupon first-time buyers bought again,
-   against ${formatPercent(coupon30.no_coupon_repeat_rate)} of the rest.
-3. **Repair two tracking problems before the next funnel review.** In
+1. **Fund a payment-step change for every device.** Every mobile minus desktop gap lies between
+   ${formatPoints(gapLow)} and ${formatPoints(gapHigh)} points. Each extra point at payment is
+   worth ${formatUsd(allDevices.revenue_per_point_usd)} per 92 days on all devices and
+   ${formatUsd(mobileOnly.revenue_per_point_usd)} on mobile alone, and an 8-week test detects
+   ${allDevices.detectable_lift_points?.toFixed(1)} points on all devices against
+   ${mobileOnly.detectable_lift_points?.toFixed(1)} on mobile.
+2. **Do not cut coupons on loyalty grounds; decide on margin.** Within 30 days,
+   ${formatPercent(coupon30.coupon_repeat_rate)} of first-time buyers who used a coupon bought
+   again, against ${formatPercent(coupon30.no_coupon_repeat_rate)} of the rest.
+3. **Check two tracking problems before the next funnel review.** In
    ${formatPercent(shippingFirst)} of checkout sessions, shipping details are logged before
    checkout begins.
 

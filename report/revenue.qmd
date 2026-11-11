@@ -1,5 +1,5 @@
 ---
-description-meta: "Revenue at stake for a payment-step fix and for mobile-only fixes, with the A/B test sizes behind each."
+description-meta: "Value of a payment-step lift on all devices against mobile only, the A/B test sizes behind each, and the coupon holdout."
 title: "Revenue at stake"
 pagetitle: "Revenue at stake"
 ---
@@ -9,7 +9,7 @@ pagetitle: "Revenue at stake"
 import {
   loadResults,
   dataAlert,
-  revenueChart,
+  testReachChart,
   dataTable,
   formatPercent,
   formatUsd,
@@ -18,7 +18,7 @@ import {
 } from "./charts.js"
 
 results = loadResults({
-  mobileOnly: FileAttachment("sources/results/sizing_mobile_only.csv"),
+  mobileCatchUp: FileAttachment("sources/results/sizing_mobile_catch_up.csv"),
   paymentTests: FileAttachment("sources/results/sizing_payment_step.csv"),
   couponHoldout: FileAttachment("sources/results/sizing_coupon_holdout.csv"),
 })
@@ -31,70 +31,83 @@ dataAlert(results.missing)
 
 ```{ojs}
 //| output: false
-mobileOnly = results.data.mobileOnly
+mobileCatchUp = results.data.mobileCatchUp
 paymentTests = results.data.paymentTests
-eightWeeks = paymentTests.find((row) => row.test_weeks === 8)
-eight = eightWeeks ?? {}
-mobileBest = Math.max(...mobileOnly.map((row) => row.extra_revenue_usd))
-timesBest = Math.round(eight.revenue_at_detectable_lift_usd / mobileBest)
-dailySessions = Math.round(eight.sessions_entering_in_sample / 92)
+pick = (scope, pace) =>
+  paymentTests.find((r) => r.scope === scope && r.traffic_pace === pace && r.test_weeks === 8) ?? {}
+allAverage = pick("all devices", "92-day average")
+allJanuary = pick("all devices", "January pace")
+mobileAverage = pick("mobile only", "92-day average")
+perPointShare = mobileAverage.revenue_per_point_usd / allAverage.revenue_per_point_usd
+catchUpBest = mobileCatchUp.reduce(
+  (best, row) => (row.extra_revenue_usd > (best.extra_revenue_usd ?? -Infinity) ? row : best),
+  {},
+)
+catchUpStep = STEP_LABELS.get(catchUpBest.step_name)?.toLowerCase() ?? "—"
 holdout = results.data.couponHoldout[0] ?? {}
 holdoutPoints = holdout.holdout_detectable_difference_points?.toFixed(1) ?? "—"
+allLift = allAverage.detectable_lift_points?.toFixed(1) ?? "—"
+mobileLift = mobileAverage.detectable_lift_points?.toFixed(1) ?? "—"
 ```
 
 ::: {.lede}
-A payment-step win that an 8-week test can detect is worth
-${formatUsd(eight.revenue_at_detectable_lift_usd)} per 92 days, about ${formatCount(timesBest)}
-times the best case for any mobile-only fix.
+Each extra point of shipping-to-payment conversion is worth
+${formatUsd(allAverage.revenue_per_point_usd)} per 92 days on all devices and
+${formatUsd(mobileAverage.revenue_per_point_usd)} on mobile alone. An 8-week test on all devices
+detects a lift of ${allLift} points; on mobile alone it needs ${mobileLift}.
 :::
 
 ```{ojs}
 //| classes: slot-revenue
-revenueChart(Plot, { mobileOnly, paymentTest: eightWeeks }, {
+testReachChart(Plot, paymentTests, {
   width,
-  title: `The payment-step test's smallest detectable win, ${formatUsd(eight.revenue_at_detectable_lift_usd)}, dwarfs every mobile-only case`,
-  subtitle: "Extra revenue per 92 days in the sample's US dollars. Mobile-only cases assume the mobile deficit is as large as its 95% interval allows and a fix closes half of it.",
+  weeks: 8,
+  title: `An 8-week test on all devices detects a ${allLift}-point lift; on mobile alone it needs ${mobileLift} points`,
+  subtitle: `Smallest lift in shipping-to-payment conversion a 50/50 test detects in 8 weeks, at 80% power and a two-sided 5% level. January pace is ${formatPercent(allJanuary.pace_factor)} of the 92-day average traffic.`,
 })
 ```
 
-## Payment step, all devices
+## Payment step
 
-Each extra percentage point of shipping-to-payment conversion is worth
-${formatUsd(eight.revenue_per_point_usd)} per 92 days. This assumes sessions that newly reach
-payment buy at today's rate and order value for their device, and that test traffic matches the
-sample's daily average of ${formatCount(dailySessions)} sessions entering the step.
+The value per point assumes that sessions which newly reach payment buy at today's rate and order
+value for their device. Mobile alone carries ${formatPercent(perPointShare)} of that value, so a
+mobile-only change is worth less per point and takes longer to test. The 92-day average includes
+the holiday peak; January's pace is the safer planning figure.
 
 ```{ojs}
 //| classes: slot-table
 dataTable({
   caption: "What a 50/50 test of the payment step can detect",
   rows: paymentTests,
-  highlight: (row) => row.test_weeks === 8,
+  highlight: (row) => row.scope === "all devices" && row.test_weeks === 8,
   columns: [
-    { label: "Test length", value: (row) => `${row.test_weeks} weeks` },
+    { label: "Scope", value: (row) => row.scope },
+    { label: "Traffic", value: (row) => row.traffic_pace },
+    { label: "Length", value: (row) => `${row.test_weeks} weeks` },
     { label: "Sessions per arm", value: (row) => formatCount(row.sessions_per_arm), numeric: true },
     { label: "Baseline", value: (row) => formatPercent(row.baseline_conversion), numeric: true },
     {
-      label: "Smallest detectable lift",
+      label: "Detectable lift",
       value: (row) => `${row.detectable_lift_points.toFixed(1)} points`,
       numeric: true,
     },
-    {
-      label: "Worth per 92 days",
-      value: (row) => formatUsd(row.revenue_at_detectable_lift_usd),
-      numeric: true,
-    },
+    { label: "Worth per point", value: (row) => formatUsd(row.revenue_per_point_usd), numeric: true },
   ],
 })
 ```
 
-## Mobile-only fixes, best case
+## Mobile catching up with desktop, at most
+
+This answers the original question: what closing half of the worst mobile gap would add. It
+assumes mobile's true deficit at each step is as large as its 95% interval allows. Even then the
+largest figure is ${formatUsd(catchUpBest.extra_revenue_usd)} per 92 days, at ${catchUpStep},
+which is before checkout.
 
 ```{ojs}
 //| classes: slot-table
 dataTable({
   caption: "Half of the largest mobile shortfall each interval allows",
-  rows: mobileOnly,
+  rows: mobileCatchUp,
   columns: [
     { label: "Step", value: (row) => STEP_LABELS.get(row.step_name) },
     {
@@ -121,7 +134,9 @@ dataTable({
 
 Confirming the observed coupon difference would need
 ${formatCount(holdout.buyers_per_arm_for_observed_difference)} first-time buyers per arm, about
-${formatCount(Math.round(holdout.days_of_first_time_buyers_needed))} days of buyers. A
-${formatCount(holdout.holdout_days)}-day holdout detects only differences of
-${holdoutPoints} points or
-more, so it can guard against a large loss of repeat buyers but cannot settle a small one.
+${formatCount(Math.round(holdout.days_of_first_time_buyers_needed))} days of buyers at the
+sample's pace of ${formatCount(Math.round(holdout.buyers_per_day))} a day, which includes the
+holiday peak. A ${formatCount(holdout.holdout_days)}-day holdout detects only differences of
+${holdoutPoints} points or more, and less once dilution is counted, because only buyers who would
+use a code are affected. It can guard against a large loss of repeat buyers but cannot settle a
+small one.

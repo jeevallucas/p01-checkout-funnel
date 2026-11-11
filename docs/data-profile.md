@@ -16,8 +16,8 @@ counts are for the full export, `events_20201101` to `events_20210131`.
 - No session spans two device categories, so a session's device is unambiguous.
 - `ga_session_id` is present on every event.
 - 5,272 sessions (1.46%) have no `session_start` event, and 105 have more than one.
-- 4,848 sessions contain a purchase; only 3 of them have no `begin_checkout`. The checkout events
-  are tagged in order, so an ordered funnel loses almost nothing.
+- 4,848 sessions contain a purchase; only 3 of them have no `begin_checkout`. Checkout events are
+  present in purchasing sessions, but their order is not reliable; see the next section.
 
 ## Event order inside a session
 Measured by `sql/shared/checkout_order_check.sql` on the session table that `uv run pipeline
@@ -71,7 +71,8 @@ touch.
   removing duplicates.
 - 906 purchase events (15.9%) have no real `ecommerce.transaction_id`. The 4,786 that have one
   carry 4,451 distinct IDs, so 335 events repeat an ID already seen.
-- 450 purchase events (7.9%) have zero revenue; none has missing revenue.
+- 450 purchase events (7.9%) have zero revenue; none has missing revenue. 366 buyers' first purchase
+  is one of them; they still count as purchases and first purchases.
 - `items.coupon` is always `(not set)` or NULL, so item-level coupons are unusable.
 - The `coupon` event parameter is set on 3,075 purchase events (54.0%), with three obfuscated
   codes. The `promotion_name` parameter is set on 2,270 (39.9%).
@@ -91,6 +92,8 @@ touch.
   become "unknown" and stay in the totals as their own row.
 - Promotion at first purchase: the `coupon` event parameter on the first purchase event.
 - First-time buyer: first purchase in the window and first seen on or after 2020-11-01, so that an
-  earlier purchase before the export is unlikely.
+  earlier purchase before the export is unlikely. The first-touch date is in UTC while purchase
+  days use the property's time zone, so buyers first seen within hours of the boundary may be
+  misplaced by a day.
 - Repeat purchase: a purchase event on a later calendar day than the first purchase, within 30 or
   60 days. Same-day second orders and repeated transaction IDs therefore never count as repeats.

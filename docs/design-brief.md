@@ -1,6 +1,7 @@
 # Design brief
 
-The report is a static Evidence site: a decision memo first, with the evidence pages behind it.
+The report is a static Quarto site: a decision memo first, with the evidence pages behind it.
+(The first version of this brief planned Evidence; see docs/decisions.md.)
 
 ## Users and context
 - The growth lead and two or three teammates, on laptops (1366-1440 px), in the office, reading for
@@ -28,7 +29,7 @@ Analytical, calm, dense. Rejected: salesy. No big hero numbers that shout withou
 
 ## Typography
 - IBM Plex Sans for prose and headings. It has tabular figures, so numbers line up in tables, and
-  its engineered shapes suit an analytics document. No other project in this workspace uses it.
+  its engineered shapes suit an analytics document. No other project in my portfolio uses it.
 - IBM Plex Sans Condensed for chart axes, direct labels, and table cells, so seven funnel steps and
   their labels fit a 375 px screen without wrapping.
 - Type scale (ratio 1.25): 13 px axis labels and table cells, 16 px body, 20 px section lede, 25 px
@@ -43,14 +44,15 @@ Every colour has one meaning across all pages.
 | Ink | #202124 | Text and axis lines | 16.1:1 |
 | Paper | #FFFFFF | Page and chart background | - |
 | Context grey | #9AA3AD | Comparison segments (desktop, buyers without a coupon, other mediums) | 2.5:1 (marks only) |
-| Mobile blue | #0072B2 | Mobile sessions, the segment the card's question is about | 5.2:1 |
+| Mobile blue | #0072B2 | Mobile sessions, the segment the original question is about | 5.2:1 |
 | Promotion green | #007A5E | Buyers who used a coupon at their first purchase | 5.3:1 |
 | Drop-off vermillion | #D55E00 | The step to fund and its annotation; text variant #A84300 | 3.9:1 marks, 6.1:1 text |
 
 Supporting neutrals: muted text #59636E (6.1:1), rules and gridlines #D8DEE4, table header panel
 #F3F5F7.
 
-Checked with the dataviz skill's palette validator (2026-11-11). Blue against grey: normal-vision
+Checked with a palette validator that measures colour difference in OKLab for normal and
+colour-blind vision (2026-11-11). Blue against grey: normal-vision
 difference 21.2, colour-blind difference 17.7. Green against grey: 22.1 and 17.6. The validator
 flags grey's low chroma and 2.5:1 contrast; both are intended, because grey means "context, not the
 point". The relief the validator asks for is in place: every mark has a direct text label and every
@@ -94,7 +96,7 @@ Pages: Memo (home), Checkout funnel, Repeat purchase, Revenue at stake, Method a
 ## One bold element
 The step ladder on the memo page: one row per funnel step, mobile (blue) and desktop (grey) step
 conversion as two dots with 95% interval whiskers. The dots sit on top of each other at every
-step, which is the first finding: there is no mobile gap. The payment step's row carries a
+step, which is the first finding: no step shows a clear mobile gap. The payment step's row carries a
 vermillion band and a direct label, "38.7% of sessions stop here on every device", filled from the
 measured values, which is the second finding. Everything else is quiet tables and plain charts in
 grey, blue, and green.
@@ -115,7 +117,7 @@ are in direct labels and tables, so nothing depends on hover.
 - Evidence's default palette leaking into any chart.
 
 ## Review against the frontend-design process
-The card's starting point was "neutral greys, one blue for the selected segment, orange for
+The starting direction was "neutral greys, one blue for the selected segment, orange for
 drop-off". Reviewed against the brief:
 - Neutral grey with one blue is the default for any analytics page. Kept, because the user compares
   one segment against the rest, but narrowed: blue now means mobile only, and a second hue (green)

@@ -17,7 +17,7 @@ revisit it.
 
 ## 2026-11-11 Drop the 90-day repeat-purchase window
 
-- Context: the card asks for 30, 60, and 90-day repeat purchase. The data covers 92 days
+- Context: the initial scope asked for 30, 60, and 90-day repeat purchase. The data covers 92 days
   (2020-11-01 to 2021-01-31). A 90-day window only fits first purchases made on 1 or 2 November.
 - Options: (a) report 90 days on a two-day cohort; (b) report 90 days with survival-analysis
   extrapolation; (c) report 30 and 60 days only, each on the cohorts that can be followed for the
@@ -30,12 +30,8 @@ revisit it.
 
 ## 2026-11-11 Add a sample-size estimate to the "how to test it" part of each recommendation
 
-- Context: current analyst postings ask for funnel and cohort SQL, BigQuery, Python for statistics,
-  and experimentation: a Staff Product Analyst listing on Built In NYC (funnels, retention, cohorts,
-  experimentation), a Data Analyst listing at Puffy (funnel leak analysis, BigQuery, Python
-  statistics, experimentation), a Sales Data Analyst listing at DermaDream (cohort retention,
-  BigQuery), and a Product Analyst listing at Kredivo in Jakarta (SQL required). The card already
-  covers funnels, cohorts, and BigQuery.
+- Context: "test it" without a length and a detectable effect cannot be scheduled. The growth lead
+  has one checkout slot per quarter, so whether a test can finish inside it is part of the choice.
 - Options: (a) keep "how to test it" as prose; (b) add a minimum detectable effect and the sessions
   needed per arm for the first recommendation's A/B test.
 - Decision: (b). It is one calculation on numbers the funnel already produces, and it turns "test
@@ -46,7 +42,7 @@ revisit it.
 ## 2026-11-11 Test the funnel and cohort logic in DuckDB on small fixtures
 
 - Context: BigQuery cannot run in CI without a service-account key, and the sandbox has no free
-  local emulator. The card asks for tests on small fixtures.
+  local emulator. The funnel and cohort logic still needs tests on small fixtures.
 - Options: (a) tests that call BigQuery, run only on a laptop; (b) translate BigQuery SQL with a
   transpiler for tests; (c) split the SQL into two layers: a BigQuery-only flattening query (UNNEST
   of `event_params` and `items`) that writes one row per session step, and the funnel and cohort
@@ -88,12 +84,12 @@ revisit it.
 - Revisit if: the profile shows that many purchases happen in sessions that never reach
   begin_checkout, which would mean the event tagging, not the shopper, skips steps.
 
-## 2026-11-11 Dependencies beyond the card's stack
+## 2026-11-11 Dependencies beyond the planned stack
 
 - `db-dtypes` is required by the BigQuery client to turn query results into pandas frames.
 - `python-dotenv` reads `GCP_PROJECT_ID` from `.env`, so no project ID is typed into commands.
 - `duckdb` (dev only) runs the shared SQL against test fixtures; see the testing decision above.
-- `sqlfluff` (dev only) lints SQL, as the workspace standard asks.
+- `sqlfluff` (dev only) lints SQL in CI.
 
 ## 2026-11-11 Cohort definitions, set by the data profile
 
@@ -135,13 +131,13 @@ revisit it.
 
 ## 2026-11-11 No mobile gap: reframe the first recommendation and the sizing
 
-- Context: the card assumes some checkout step loses more mobile than desktop shoppers. The
+- Context: the starting question assumed some checkout step loses more mobile than desktop shoppers. The
   measured gaps (mobile minus desktop) all have 95% intervals that include zero. The most a mobile
   deficit can be at any step, by the interval's lower bound, is 1.2 points (purchase after
   payment); at payment after shipping it is 0.6 points.
 - Options: (a) report the largest point estimate as "the worst mobile step"; (b) state that the
   data rules out a mobile-specific problem, and size two things instead: the most a mobile-only
-  fix could be worth (half of the interval's worst case, as the card's sizing rule asks), and the
+  fix could be worth (half of the interval's worst case, the sizing rule in the brief), and the
   gain from lifting the weakest checkout step for all devices.
 - Decision: (b). Option (a) would present noise as a finding, which is the error the intervals
   exist to prevent. The first recommendation becomes "do not fund a mobile-only checkout fix; fund
@@ -166,7 +162,7 @@ revisit it.
 
 ## 2026-11-11 Build the report with Quarto and Observable Plot instead of Evidence
 
-- Context: the card names Evidence for a static report on GitHub Pages. Evidence's official
+- Context: the plan named Evidence for a static report on GitHub Pages. Evidence's official
   template (commit 5ddd88d, August 2026) now marks its npm build scripts as deprecated and points
   to a new CLI tied to the hosted Evidence Studio, which needs an account and publishes to its
   own platform.
@@ -182,3 +178,31 @@ revisit it.
   browser from the CSV files, so they cannot drift from the data. The memo page includes
   docs/memo.md unchanged.
 - Revisit if: the report needs server-side queries, which a static site cannot run.
+
+## 2026-11-11 Revisions after an outside review
+
+- Context: a reviewer, reading the repository as a hiring manager would, found claims that the
+  result files did not support and one comparison of unlike things.
+- Decisions:
+  - "Payment loses the most" was true only inside checkout. Cart to checkout loses more sessions
+    (60.8%), but carts carry across visits, so that session-level rate overstates the loss. The
+    memo now says "inside checkout" and explains why cart to checkout waits for a browser-level
+    analysis.
+  - The memo compared a mobile catch-up ceiling ($1,200, half of the worst deficit the intervals
+    allow) with an assumed all-device lift and called it "14 times". Recommendation 1 now
+    compares like with like: the same payment-step lift on all devices ($5,003 per point) against
+    mobile only ($1,993 per point), and the lift an 8-week test can detect for each (3.3 against
+    5.1 points). The catch-up ceiling stays, labelled as the answer to the original question.
+  - Test sizes used the 92-day average traffic, which includes the holiday peak. January ran at
+    63% of that average; at that pace the all-device test detects 4.1 points. Both are reported,
+    and the test randomises by browser because carts carry across visits.
+  - "Convert alike" and "rules out" overstated a null result. The text now gives the range the
+    intervals still allow.
+  - The flattening queries had no check against real data. `uv run pipeline check` now compares
+    purchase events, buyers, and purchasing sessions in the work tables with the raw export, and
+    confirms that no user logs one transaction ID on two days, which the repeat rule depends on.
+  - 366 first purchases with zero revenue and the UTC first-touch date are now stated in the data
+    profile and the memo.
+- Consequences: the memo's first recommendation is narrower and its numbers smaller, but each
+  compares like with like and traces to a file.
+- Revisit if: a browser-level funnel shows cart-to-checkout loss larger than the payment step's.
