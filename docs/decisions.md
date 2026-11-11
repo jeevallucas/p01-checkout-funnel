@@ -70,3 +70,27 @@ revisit it.
 - Consequences: the CSV files must be regenerated and committed when a query changes; CI checks
   that the report builds from them.
 - Revisit if: the report needs data that is too large to commit.
+
+## 2026-11-11 Count an ordered, session-based funnel
+
+- Context: the growth lead asks where shoppers drop out of checkout. GA4 events can arrive out of
+  order, repeat, or skip steps, and one user can have many sessions over three months.
+- Options: (a) user-based funnel over the whole window; (b) session-based open funnel, where a
+  session counts at a step if it has the event at all; (c) session-based ordered funnel, where a
+  session counts at a step only if the event happens at or after it reached the previous step.
+- Decision: (c). A checkout fix changes what happens inside one visit, so the session is the unit
+  an A/B test would randomise and measure. Ordering stops a purchase without begin_checkout from
+  inflating the later steps. Every event counts, not only each step's first, so a later repeat
+  still satisfies the order; equal timestamps count as in order because GA4 batches events.
+- Consequences: sessions without session_start are left out; the profile reports how many. A user
+  with several sessions counts several times, so intervals treat sessions as independent, which
+  slightly understates their width.
+- Revisit if: the profile shows that many purchases happen in sessions that never reach
+  begin_checkout, which would mean the event tagging, not the shopper, skips steps.
+
+## 2026-11-11 Dependencies beyond the card's stack
+
+- `db-dtypes` is required by the BigQuery client to turn query results into pandas frames.
+- `python-dotenv` reads `GCP_PROJECT_ID` from `.env`, so no project ID is typed into commands.
+- `duckdb` (dev only) runs the shared SQL against test fixtures; see the testing decision above.
+- `sqlfluff` (dev only) lints SQL, as the workspace standard asks.

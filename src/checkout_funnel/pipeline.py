@@ -4,9 +4,9 @@ import argparse
 from pathlib import Path
 
 from checkout_funnel.bigquery_runner import bigquery_client, run_sql_file
+from checkout_funnel.sql_files import SQL_DIR
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SQL_DIR = REPO_ROOT / "sql"
 RESULTS_DIR = REPO_ROOT / "report" / "sources" / "results"
 
 
