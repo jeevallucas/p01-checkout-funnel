@@ -2,7 +2,7 @@
 
 import pandas as pd
 
-from checkout_funnel.conversion_stats import conversion_gap, step_conversion
+from checkout_funnel.conversion_stats import rate_difference, rate_with_interval
 
 FUNNEL_STEPS = [
     "session_start",
@@ -33,7 +33,7 @@ def step_conversion_table(step_pairs: pd.DataFrame) -> pd.DataFrame:
     _check_steps(step_pairs)
     entered = step_pairs[step_pairs["sessions_entered"] > 0]
     intervals = [
-        step_conversion(int(row.sessions_reached), int(row.sessions_entered))
+        rate_with_interval(int(row.sessions_reached), int(row.sessions_entered))
         for row in entered.itertuples()
     ]
     return entered.assign(
@@ -56,7 +56,7 @@ def mobile_gap_table(step_pairs: pd.DataFrame) -> pd.DataFrame:
             raise ValueError(
                 f"Step {step_name!r} is missing for mobile or desktop; the gap needs both."
             ) from None
-        gap = conversion_gap(
+        gap = rate_difference(
             int(mobile["sessions_reached"]),
             int(mobile["sessions_entered"]),
             int(desktop["sessions_reached"]),

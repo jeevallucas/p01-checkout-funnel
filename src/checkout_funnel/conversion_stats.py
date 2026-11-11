@@ -1,9 +1,9 @@
-"""Intervals and test sizing for checkout step conversion.
+"""Intervals and test sizing for conversion and repeat-purchase rates.
 
 Wilson intervals keep their coverage near 95% for small counts and rates near 0 or 1, where the
-textbook normal (Wald) interval undercovers; late checkout steps on tablets have small counts.
-The mobile minus desktop gap uses Newcombe's hybrid score interval, built from two Wilson
-intervals, for the same reason.
+textbook normal (Wald) interval undercovers; tablet checkout steps and repeat purchases have small
+counts. Differences between groups (mobile minus desktop, coupon minus no coupon) use Newcombe's
+hybrid score interval, built from two Wilson intervals, for the same reason.
 """
 
 import math
@@ -24,44 +24,44 @@ class RateInterval:
     high: float
 
 
-def _check_counts(reached: int, entered: int, label: str) -> None:
-    if entered <= 0:
-        raise ValueError(f"{label}: no sessions entered the step, so its conversion is undefined.")
-    if not 0 <= reached <= entered:
+def _check_counts(successes: int, trials: int, label: str) -> None:
+    if trials <= 0:
+        raise ValueError(f"{label}: the group is empty, so its rate is undefined.")
+    if not 0 <= successes <= trials:
         raise ValueError(
-            f"{label}: {reached} sessions reached the next step out of {entered} that entered; "
-            "reached must be between 0 and entered. Check the funnel ordering rule."
+            f"{label}: {successes} successes out of {trials}; successes must be between 0 and "
+            "the group size. Check the query that produced the counts."
         )
 
 
-def step_conversion(reached: int, entered: int, confidence: float = 0.95) -> RateInterval:
-    """Share of sessions that entered a step and reached the next one, with a Wilson interval."""
-    _check_counts(reached, entered, "step conversion")
-    low, high = proportion_confint(reached, entered, alpha=1 - confidence, method="wilson")
-    return RateInterval(reached / entered, float(low), float(high))
+def rate_with_interval(successes: int, trials: int, confidence: float = 0.95) -> RateInterval:
+    """A rate such as step conversion or repeat purchase, with a Wilson interval."""
+    _check_counts(successes, trials, "rate")
+    low, high = proportion_confint(successes, trials, alpha=1 - confidence, method="wilson")
+    return RateInterval(successes / trials, float(low), float(high))
 
 
-def conversion_gap(
-    mobile_reached: int,
-    mobile_entered: int,
-    desktop_reached: int,
-    desktop_entered: int,
+def rate_difference(
+    successes_a: int,
+    trials_a: int,
+    successes_b: int,
+    trials_b: int,
     confidence: float = 0.95,
 ) -> RateInterval:
-    """Mobile minus desktop step conversion, with Newcombe's hybrid score interval."""
-    _check_counts(mobile_reached, mobile_entered, "mobile")
-    _check_counts(desktop_reached, desktop_entered, "desktop")
+    """Rate of group a minus rate of group b, with Newcombe's hybrid score interval."""
+    _check_counts(successes_a, trials_a, "group a")
+    _check_counts(successes_b, trials_b, "group b")
     low, high = confint_proportions_2indep(
-        mobile_reached,
-        mobile_entered,
-        desktop_reached,
-        desktop_entered,
+        successes_a,
+        trials_a,
+        successes_b,
+        trials_b,
         method="newcomb",
         compare="diff",
         alpha=1 - confidence,
     )
-    gap = mobile_reached / mobile_entered - desktop_reached / desktop_entered
-    return RateInterval(gap, float(low), float(high))
+    difference = successes_a / trials_a - successes_b / trials_b
+    return RateInterval(difference, float(low), float(high))
 
 
 def sessions_per_arm(

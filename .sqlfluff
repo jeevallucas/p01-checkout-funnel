@@ -5,6 +5,10 @@ max_line_length = 100
 
 [sqlfluff:templater:python:context]
 session_step_event = session_step_event
+purchase_event = purchase_event
+buyer = buyer
+export_first_day = 18567
+export_last_day = 18658
 
 [sqlfluff:indentation]
 tab_space_size = 4

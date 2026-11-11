@@ -23,9 +23,11 @@ Each milestone ends with a commit and a push. Done means the listed check passes
 - Done when: tests pass and `report/sources/` holds the funnel aggregates.
 
 ## 3. Repeat-purchase cohorts
-- First purchase per user in the window, acquisition medium and source, coupon use at the first
-  purchase; repeat purchase within 30 and 60 days, only for cohorts with full follow-up.
-- Fixture tests: censoring cut-off, same-day second orders, users with placeholder medium.
+- First purchase per user first seen in the window, acquisition medium from the earliest event,
+  coupon use at the first purchase; repeat purchase within 30 and 60 days, only for buyers whose
+  whole window fits in the export.
+- Fixture tests: window cut-off, same-day second orders, 45-day repeats, coupon only on a later
+  order, unknown medium, buyers first seen before the export.
 - Done when: tests pass and the cohort aggregates are written.
 
 ## 4. Revenue at stake and memo

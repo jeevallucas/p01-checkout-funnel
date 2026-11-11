@@ -1,20 +1,20 @@
 import pytest
 from statsmodels.stats.proportion import proportion_effectsize
 
-from checkout_funnel.conversion_stats import conversion_gap, sessions_per_arm, step_conversion
+from checkout_funnel.conversion_stats import rate_difference, rate_with_interval, sessions_per_arm
 
 
 def test_wilson_interval_matches_newcombe_1998_worked_example():
     # Newcombe (1998), Statistics in Medicine 17:857-872, example 81/263: Wilson 0.2553 to 0.3662.
-    result = step_conversion(81, 263)
+    result = rate_with_interval(81, 263)
     assert result.rate == pytest.approx(81 / 263)
     assert result.low == pytest.approx(0.2553, abs=5e-5)
     assert result.high == pytest.approx(0.3662, abs=5e-5)
 
 
 def test_wilson_interval_stays_inside_zero_and_one_at_the_edges():
-    none_reached = step_conversion(0, 12)
-    all_reached = step_conversion(12, 12)
+    none_reached = rate_with_interval(0, 12)
+    all_reached = rate_with_interval(12, 12)
     assert none_reached.low == pytest.approx(0.0, abs=1e-12) and none_reached.high > 0.0
     assert all_reached.high == pytest.approx(1.0) and all_reached.low < 1.0
 
@@ -22,14 +22,14 @@ def test_wilson_interval_stays_inside_zero_and_one_at_the_edges():
 def test_gap_interval_matches_newcombe_1998_hybrid_score_example():
     # Newcombe (1998), Statistics in Medicine 17:873-890, 56/70 minus 48/80, method 10:
     # difference 0.2000, interval 0.0524 to 0.3339.
-    result = conversion_gap(56, 70, 48, 80)
+    result = rate_difference(56, 70, 48, 80)
     assert result.rate == pytest.approx(0.2)
     assert result.low == pytest.approx(0.0524, abs=5e-5)
     assert result.high == pytest.approx(0.3339, abs=5e-5)
 
 
-def test_gap_is_negative_when_mobile_converts_worse():
-    result = conversion_gap(30, 100, 50, 100)
+def test_difference_is_negative_when_the_first_group_converts_worse():
+    result = rate_difference(30, 100, 50, 100)
     assert result.rate == pytest.approx(-0.2)
     assert result.low < result.rate < result.high < 0
 
@@ -37,14 +37,14 @@ def test_gap_is_negative_when_mobile_converts_worse():
 @pytest.mark.parametrize(
     ("reached", "entered", "message"),
     [
-        (0, 0, "no sessions entered"),
-        (5, 4, "reached must be between 0 and entered"),
-        (-1, 4, "reached must be between 0 and entered"),
+        (0, 0, "the group is empty"),
+        (5, 4, "successes must be between 0"),
+        (-1, 4, "successes must be between 0"),
     ],
 )
 def test_invalid_counts_raise_an_actionable_error(reached, entered, message):
     with pytest.raises(ValueError, match=message):
-        step_conversion(reached, entered)
+        rate_with_interval(reached, entered)
 
 
 def test_sessions_per_arm_matches_cohen_table_for_small_effect():

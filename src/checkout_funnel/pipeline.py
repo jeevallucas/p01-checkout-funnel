@@ -7,6 +7,13 @@ import pandas as pd
 from google.cloud import bigquery
 
 from checkout_funnel.bigquery_runner import bigquery_client, build_work_table, run_query
+from checkout_funnel.cohorts import (
+    EXPORT_FIRST_DAY,
+    EXPORT_LAST_DAY,
+    coupon_difference_table,
+    day_number,
+    repeat_rate_table,
+)
 from checkout_funnel.funnel import mobile_gap_table, step_conversion_table
 from checkout_funnel.sql_files import SQL_DIR, shared_query
 
@@ -27,20 +34,16 @@ def run_profile(client: bigquery.Client) -> None:
 
 
 def run_funnel(client: bigquery.Client) -> None:
-    session_step_event = build_work_table(
-        client,
-        (SQL_DIR / "bigquery" / "session_step_event.sql").read_text(encoding="utf-8"),
-        "session_step_event",
-    )
+    session_step_event = build_bigquery_table(client, "session_step_event")
     step_sessions = run_query(
         client,
-        shared_query("funnel_step_sessions", session_step_event=f"`{session_step_event}`"),
+        shared_query("funnel_step_sessions", session_step_event=session_step_event),
         "funnel_step_sessions.sql",
     )
     write_result(step_sessions, "funnel_step_sessions")
     order_check = run_query(
         client,
-        shared_query("checkout_order_check", session_step_event=f"`{session_step_event}`"),
+        shared_query("checkout_order_check", session_step_event=session_step_event),
         "checkout_order_check.sql",
     )
     write_result(order_check, "funnel_checkout_order_check")
@@ -48,7 +51,28 @@ def run_funnel(client: bigquery.Client) -> None:
     write_result(mobile_gap_table(step_sessions), "funnel_mobile_gap")
 
 
-STEPS = {"profile": run_profile, "funnel": run_funnel}
+def build_bigquery_table(client: bigquery.Client, name: str) -> str:
+    sql = (SQL_DIR / "bigquery" / f"{name}.sql").read_text(encoding="utf-8")
+    return f"`{build_work_table(client, sql, name)}`"
+
+
+def run_cohorts(client: bigquery.Client) -> None:
+    cohorts = run_query(
+        client,
+        shared_query(
+            "repeat_purchase_cohorts",
+            purchase_event=build_bigquery_table(client, "purchase_event"),
+            buyer=build_bigquery_table(client, "buyer"),
+            export_first_day=str(day_number(EXPORT_FIRST_DAY)),
+            export_last_day=str(day_number(EXPORT_LAST_DAY)),
+        ),
+        "repeat_purchase_cohorts.sql",
+    )
+    write_result(repeat_rate_table(cohorts), "cohort_repeat_purchase")
+    write_result(coupon_difference_table(cohorts), "cohort_coupon_difference")
+
+
+STEPS = {"profile": run_profile, "funnel": run_funnel, "cohorts": run_cohorts}
 
 
 def main() -> None:
