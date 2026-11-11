@@ -13,10 +13,10 @@ __pycache__/
 # Raw extracts stay local; only aggregated result files are committed
 data/raw/
 
-# Evidence report build output
+# Quarto report build output
+report/_site/
+report/.quarto/
 node_modules/
-report/.evidence/
-report/build/
 
 # Screenshot review rounds (final screenshots live in docs/screenshots/)
 docs/screenshots/review/

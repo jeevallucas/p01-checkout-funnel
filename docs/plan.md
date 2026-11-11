@@ -39,8 +39,9 @@ Each milestone ends with a commit and a push. Done means the listed check passes
   how to test it.
 - Done when: every memo number traces to a file in `report/sources/`.
 
-## 5. Evidence report on GitHub Pages
-- Pages: memo, checkout funnel, repeat purchase, revenue at stake, method and data.
+## 5. Quarto report on GitHub Pages
+- Pages: overview, memo, checkout funnel, repeat purchase, revenue at stake, method. Charts in
+  Observable Plot read the committed CSV files (Evidence was dropped; see docs/decisions.md).
 - Theme from `docs/design-brief.md`; screenshot review loop at 375, 768, and 1440 px, logged in
   `docs/design-review.md`; Playwright demo recording.
 - GitHub Actions: lint, tests, report build, Pages deploy.
