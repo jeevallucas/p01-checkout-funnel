@@ -1,7 +1,7 @@
 # Checkout and repeat purchase: what to fund next quarter
 
 For the growth lead. Based on the Google Merchandise Store GA4 sample, 1 November 2020 to
-31 January 2021 (92 days, 360,129 sessions, 5,365 orders). Revenue figures are the sample's US
+31 January 2021 (92 days, 360,129 sessions, 5,357 orders). Revenue figures are the sample's US
 dollars over those 92 days.
 
 ## The answer

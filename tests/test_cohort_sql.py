@@ -140,3 +140,28 @@ def test_coupon_difference_needs_both_segments():
     )
     with pytest.raises(ValueError, match="needs both"):
         coupon_difference_table(only_coupon)
+
+
+def test_order_value_counts_each_transaction_once_on_its_first_device():
+    connection = duckdb.connect()
+    connection.execute(
+        "create table purchase_event (transaction_id varchar, device_category varchar, "
+        "event_at bigint, revenue_usd double)"
+    )
+    connection.executemany(
+        "insert into purchase_event values (?, ?, ?, ?)",
+        [
+            ("t1", "mobile", 1, 50.0),
+            ("t1", "desktop", 2, 50.0),  # same order logged again from another device
+            ("t2", "desktop", 3, 30.0),
+            (None, "desktop", 4, 20.0),  # no usable ID: one order on its own
+            (None, "desktop", 5, 0.0),
+        ],
+    )
+    rows = connection.execute(shared_query("order_value", purchase_event="purchase_event")).df()
+    by_device = rows.set_index("device_category")
+    assert by_device.loc["mobile", "orders"] == 1
+    assert by_device.loc["mobile", "revenue_usd"] == 50.0
+    assert by_device.loc["desktop", "orders"] == 3
+    assert by_device.loc["desktop", "revenue_usd"] == 50.0
+    assert by_device.loc["desktop", "zero_revenue_orders"] == 1

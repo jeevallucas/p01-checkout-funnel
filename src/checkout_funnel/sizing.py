@@ -13,6 +13,11 @@ PAYMENT_STEP = "add_payment_info"
 
 def order_value_by_device(order_value: pd.DataFrame) -> dict[str, float]:
     """Average order value per device: revenue over orders, each transaction ID counted once."""
+    if (order_value["orders"] <= 0).any():
+        raise ValueError(
+            "cohort_order_value.csv has a device with no orders, so its order value is undefined; "
+            "rerun `uv run pipeline cohorts` and check sql/shared/order_value.sql."
+        )
     return dict(
         zip(
             order_value["device_category"],

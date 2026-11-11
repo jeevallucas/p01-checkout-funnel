@@ -3,7 +3,6 @@
 
 export const COLORS = {
   ink: "#202124",
-  muted: "#59636E",
   rule: "#D8DEE4",
   context: "#9AA3AD",
   mobile: "#0072B2",
@@ -538,9 +537,9 @@ export function dataTable({ caption, columns, rows, highlight = () => false }) {
   hint.textContent = " Scroll sideways for more columns.";
   heading.append(hint);
   block.append(heading, wrap);
-  // Show the hint only when the table is wider than the screen.
-  requestAnimationFrame(() => {
+  // Show the hint only while the table is wider than its container; re-checked on resize.
+  new ResizeObserver(() => {
     block.classList.toggle("scrolls", wrap.scrollWidth > wrap.clientWidth + 1);
-  });
+  }).observe(wrap);
   return block;
 }

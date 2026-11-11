@@ -41,7 +41,12 @@ def build_work_table(client: bigquery.Client, sql: str, table_name: str) -> str:
     """Write a query's result to the work dataset and return the table's full ID."""
     dataset = bigquery.Dataset(f"{client.project}.{WORK_DATASET}")
     dataset.location = WORK_LOCATION
-    client.create_dataset(dataset, exists_ok=True)
+    dataset = client.create_dataset(dataset, exists_ok=True)
+    if dataset.location != WORK_LOCATION:
+        raise SystemExit(
+            f"Dataset {dataset.dataset_id} exists in {dataset.location}, but the GA4 sample is in "
+            f"{WORK_LOCATION}. Delete that dataset or use another Google Cloud project."
+        )
     table_id = f"{client.project}.{WORK_DATASET}.{table_name}"
     job_config = bigquery.QueryJobConfig(
         destination=table_id,

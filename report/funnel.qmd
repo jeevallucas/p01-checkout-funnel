@@ -38,7 +38,9 @@ widestGap = gaps.reduce((worst, row) => (row.gap_low < worst.gap_low ? row : wor
   gap_low: Infinity,
 })
 widestStep = STEP_LABELS.get(widestGap.step_name)?.toLowerCase() ?? "—"
-widestShortfall = formatPoints(Math.abs(widestGap.gap_low))
+widestShortfall = Number.isFinite(widestGap.gap_low)
+  ? (Math.abs(widestGap.gap_low) * 100).toFixed(1)
+  : "—"
 check = results.data.orderCheck[0] ?? {}
 ```
 

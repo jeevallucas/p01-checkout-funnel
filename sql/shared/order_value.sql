@@ -1,21 +1,25 @@
--- Orders and revenue by device, counting each transaction ID once. 335 purchase events repeat an
--- ID already seen (docs/data-profile.md); events without a usable ID count as one order each.
+-- Orders and revenue by device, counting each transaction ID once, on the device of its first
+-- event. 335 purchase events repeat an ID already seen (docs/data-profile.md); events without a
+-- usable ID count as one order each.
 -- Runs unchanged in BigQuery and DuckDB; {purchase_event} is filled in by the caller.
-with identified_order as (
+with ranked_purchase as (
     select
-        device_category,
         transaction_id,
-        max(revenue_usd) as revenue_usd
+        device_category,
+        revenue_usd,
+        row_number() over (
+            partition by transaction_id order by event_at asc, device_category asc
+        ) as event_rank
     from {purchase_event}
     where transaction_id is not null
-    group by device_category, transaction_id
 ),
 
 purchase_order as (
     select
         device_category,
         revenue_usd
-    from identified_order
+    from ranked_purchase
+    where event_rank = 1
     union all
     select
         device_category,

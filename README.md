@@ -98,7 +98,7 @@ Step conversion, sessions at the previous step that reach this step, 1 November 
 | Purchase | 71.7% | 70.7% | +1.0 points (-1.2 to +3.2) |
 
 - The payment step loses 38.7% of the sessions that reach it, on every device. Each extra point
-  there is worth $5,009 per 92 days in the sample's dollars. A mobile-only fix could add at most
+  there is worth $5,003 per 92 days in the sample's dollars. A mobile-only fix could add at most
   $1,200, assuming the mobile deficit is as large as its interval allows and a fix closes half.
 - 5.9% of 2,613 first-time buyers bought again within 30 days, and 7.7% of 1,130 within 60 days.
   Coupon buyers repeated at 6.4% against 5.3% without a coupon: +1.1 points, interval -0.7 to +2.9.
