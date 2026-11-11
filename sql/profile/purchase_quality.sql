@@ -1,13 +1,25 @@
--- One row: how usable the purchase events are for revenue and repeat-purchase work.
+-- One row: how usable the purchase events are for revenue and repeat-purchase work. The last
+-- column counts buyers whose first purchase records zero revenue.
 -- A transaction ID or coupon counts as missing when it is NULL or one of the placeholders.
 with purchase as (
     select
         user_pseudo_id,
+        event_timestamp,
         ecommerce.transaction_id,
         ecommerce.purchase_revenue_in_usd,
         items
     from `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`
     where event_name = 'purchase'
+),
+
+first_purchase as (
+    select
+        user_pseudo_id,
+        array_agg(purchase_revenue_in_usd order by event_timestamp limit 1)[
+            offset(0)
+        ] as first_revenue_usd
+    from purchase
+    group by user_pseudo_id
 )
 
 select
@@ -34,5 +46,8 @@ select
                 item.coupon is not null
                 and item.coupon not in ('', '<Other>', '(not set)', '(data deleted)')
         )
-    ) as purchases_with_item_coupon
+    ) as purchases_with_item_coupon,
+    (
+        select countif(first_purchase.first_revenue_usd = 0) from first_purchase
+    ) as first_purchases_with_zero_revenue
 from purchase
