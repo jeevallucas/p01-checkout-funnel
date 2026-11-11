@@ -1,0 +1,39 @@
+[project]
+name = "checkout-funnel"
+version = "0.1.0"
+description = "Checkout funnel and repeat-purchase analysis on the GA4 public e-commerce sample"
+authors = [
+    { name = "Putu Jeevallucas Jnanamaitriya Surya Gautama", email = "117974423+jeevallucas@users.noreply.github.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "db-dtypes==1.9.0",
+    "google-cloud-bigquery==3.47.0",
+    "pandas==3.1.1",
+    "python-dotenv==1.2.4",
+    "statsmodels==0.15.0",
+]
+
+[project.scripts]
+pipeline = "checkout_funnel.pipeline:main"
+
+[build-system]
+requires = ["uv_build>=0.13.7,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "duckdb==2.0.0",
+    "pytest==9.2.0",
+    "ruff==0.17.4",
+    "sqlfluff==4.5.0",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
