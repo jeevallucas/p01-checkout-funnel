@@ -222,9 +222,12 @@ table.data-table tr.highlight td {
   min-height: 470px;
 }
 
-.slot-repeat,
-.slot-revenue {
+.slot-repeat {
   min-height: 600px;
+}
+
+.slot-revenue {
+  min-height: 440px;
 }
 
 .slot-table {
@@ -233,9 +236,12 @@ table.data-table tr.highlight td {
 
 @media (max-width: 575px) {
   .slot-ladder,
-  .slot-repeat,
-  .slot-revenue {
+  .slot-repeat {
     min-height: 680px;
+  }
+
+  .slot-revenue {
+    min-height: 520px;
   }
 }
 

@@ -85,3 +85,12 @@ Not fixed:
   in full. Tables and charts handle zero rows with the same message as the error state.
 - Long text and large numbers: the longest labels ("Add shipping details", "Coupon at first
   purchase") and the largest counts (205,899) were checked at 375 px.
+
+## Content update after the outside review (2026-11-11)
+
+Not a design round: the memo's claims changed (see docs/decisions.md, "Revisions after an outside
+review"). The revenue page's chart now compares the lift an 8-week test detects on all devices
+and on mobile only; its reserved height was cut from 600 to 440 px to match. The overview's chart
+title and lede now describe a null result as a range. All 18 page and width combinations were
+captured again: axe 0 violations, no sideways scroll. Screenshots and the demo were re-recorded so
+their numbers match the current result files.
