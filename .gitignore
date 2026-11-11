@@ -1,0 +1,22 @@
+# Local configuration and credentials
+.env
+*.json.key
+application_default_credentials.json
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Raw extracts stay local; only aggregated result files are committed
+data/raw/
+
+# Evidence report build output
+node_modules/
+report/.evidence/
+report/build/
+
+# Screenshot review rounds (final screenshots live in docs/screenshots/)
+docs/screenshots/review/
