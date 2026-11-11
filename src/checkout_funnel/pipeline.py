@@ -6,7 +6,12 @@ from pathlib import Path
 import pandas as pd
 from google.cloud import bigquery
 
-from checkout_funnel.bigquery_runner import bigquery_client, build_work_table, run_query
+from checkout_funnel.bigquery_runner import (
+    WORK_DATASET,
+    bigquery_client,
+    build_work_table,
+    run_query,
+)
 from checkout_funnel.cohorts import (
     EXPORT_FIRST_DAY,
     EXPORT_LAST_DAY,
@@ -15,7 +20,13 @@ from checkout_funnel.cohorts import (
     repeat_rate_table,
 )
 from checkout_funnel.funnel import mobile_gap_table, step_conversion_table
-from checkout_funnel.sizing import coupon_holdout_test, mobile_only_upper_bound, payment_step_test
+from checkout_funnel.reconciliation import reconciliation_failures
+from checkout_funnel.sizing import (
+    coupon_holdout_test,
+    january_pace,
+    mobile_catch_up_ceiling,
+    payment_step_test,
+)
 from checkout_funnel.sql_files import SQL_DIR, shared_query
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -81,18 +92,37 @@ def run_cohorts(client: bigquery.Client) -> None:
     )
 
 
+def run_check(client: bigquery.Client) -> None:
+    """Reconcile the work tables with the raw export; needs the funnel and cohorts steps first."""
+    tables = {
+        name: f"`{client.project}.{WORK_DATASET}.{name}`"
+        for name in ("purchase_event", "buyer", "session_step_event")
+    }
+    sql = (SQL_DIR / "checks" / "reconciliation.sql").read_text(encoding="utf-8")
+    counts = run_query(client, sql.format(**tables), "reconciliation.sql")
+    write_result(counts, "check_reconciliation")
+    failures = reconciliation_failures(counts.iloc[0].to_dict())
+    if failures:
+        raise SystemExit("Reconciliation failed:\n- " + "\n- ".join(failures))
+    print("Reconciliation: work tables match the raw export.")
+
+
 def run_sizing() -> None:
     """Needs no BigQuery: it reads the aggregate files the funnel and cohorts steps wrote."""
     export_days = (EXPORT_LAST_DAY - EXPORT_FIRST_DAY).days + 1
     step_purchase = read_result("funnel_step_purchase_rate")
     order_value = read_result("cohort_order_value")
     write_result(
-        mobile_only_upper_bound(read_result("funnel_mobile_gap"), step_purchase, order_value),
-        "sizing_mobile_only",
+        mobile_catch_up_ceiling(read_result("funnel_mobile_gap"), step_purchase, order_value),
+        "sizing_mobile_catch_up",
     )
+    paces = {
+        "92-day average": 1.0,
+        "January pace": january_pace(read_result("profile_daily_volume")),
+    }
     write_result(
         payment_step_test(
-            read_result("funnel_step_conversion"), step_purchase, order_value, export_days
+            read_result("funnel_step_conversion"), step_purchase, order_value, export_days, paces
         ),
         "sizing_payment_step",
     )
@@ -106,7 +136,12 @@ def run_sizing() -> None:
     )
 
 
-BIGQUERY_STEPS = {"profile": run_profile, "funnel": run_funnel, "cohorts": run_cohorts}
+BIGQUERY_STEPS = {
+    "profile": run_profile,
+    "funnel": run_funnel,
+    "cohorts": run_cohorts,
+    "check": run_check,
+}
 
 
 def main() -> None:
@@ -115,7 +150,7 @@ def main() -> None:
         "steps",
         nargs="+",
         choices=[*BIGQUERY_STEPS, "sizing", "all"],
-        help="profile, funnel, and cohorts query BigQuery; sizing works offline from their files",
+        help="profile, funnel, cohorts, and check query BigQuery; sizing works offline",
     )
     args = parser.parse_args()
     steps = [*BIGQUERY_STEPS, "sizing"] if "all" in args.steps else args.steps

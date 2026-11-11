@@ -35,14 +35,16 @@ def purchase_rate_by_step(step_purchase: pd.DataFrame) -> dict[tuple[str, str], 
     }
 
 
-def mobile_only_upper_bound(
+def mobile_catch_up_ceiling(
     mobile_gap: pd.DataFrame, step_purchase: pd.DataFrame, order_value: pd.DataFrame
 ) -> pd.DataFrame:
-    """The most a mobile-only fix could add, per step, under the card's sizing rule.
+    """What mobile catching up with desktop could add, per step, at most.
 
-    Assumption: the true mobile deficit is as large as the 95% interval allows (its lower bound),
-    and a fix closes half of it. Each extra session reaching the step then buys at the rate
-    sessions with that step already do, at the mobile average order value.
+    This sizes the original question (half of the worst mobile gap), not a fix: it assumes the
+    true mobile deficit is as large as the 95% interval allows (its lower bound) and that half of
+    it is closed. Each extra session reaching the step then buys at the rate sessions with that
+    step already do, at the mobile average order value. Taking the largest of six one-sided
+    bounds makes the figure a generous ceiling.
     """
     purchase_rate = purchase_rate_by_step(step_purchase)
     mobile_order_value = order_value_by_device(order_value)["mobile"]
@@ -67,47 +69,68 @@ def mobile_only_upper_bound(
     return pd.DataFrame(rows).sort_values("extra_revenue_usd", ascending=False, ignore_index=True)
 
 
+SCOPES = {"all devices": None, "mobile only": ("mobile",)}
+
+
 def payment_step_test(
     step_conversion: pd.DataFrame,
     step_purchase: pd.DataFrame,
     order_value: pd.DataFrame,
     export_days: int,
+    traffic_paces: dict[str, float],
     test_weeks: tuple[int, ...] = (4, 8, 12),
 ) -> pd.DataFrame:
-    """Value of lifting payment-step conversion on every device, and what a test can detect.
+    """Value per point of payment-step conversion, and what a test can detect, by scope and pace.
 
-    Assumptions: traffic during a test matches the sample's daily average; a 50/50 split; extra
-    sessions that add payment info buy at the rate such sessions already do, at their device's
-    average order value.
+    Scopes compare like with like: the same step and the same lift, on every device or on mobile
+    only. Paces scale the sample's daily traffic (1.0 is the 92-day average, which includes the
+    holiday peak). Assumptions: a 50/50 split; extra sessions that add payment details buy at the
+    rate such sessions already do, at their device's average order value.
     """
     purchase_rate = purchase_rate_by_step(step_purchase)
     device_order_value = order_value_by_device(order_value)
     payment = step_conversion[step_conversion["step_name"] == PAYMENT_STEP]
-    entered = int(payment["sessions_entered"].sum())
-    baseline = payment["sessions_reached"].sum() / entered
-    revenue_per_point = sum(
-        row.sessions_entered
-        * 0.01
-        * purchase_rate[(row.device_category, PAYMENT_STEP)]
-        * device_order_value[row.device_category]
-        for row in payment.itertuples()
-    )
     rows = []
-    for weeks in test_weeks:
-        per_arm = int(entered / export_days * 7 * weeks / 2)
-        lift = detectable_rate(baseline, per_arm) - baseline
-        rows.append(
-            {
-                "test_weeks": weeks,
-                "sessions_per_arm": per_arm,
-                "baseline_conversion": baseline,
-                "detectable_lift_points": lift * 100,
-                "revenue_per_point_usd": revenue_per_point,
-                "revenue_at_detectable_lift_usd": revenue_per_point * lift * 100,
-                "sessions_entering_in_sample": entered,
-            }
+    for scope, devices in SCOPES.items():
+        in_scope = payment if devices is None else payment[payment["device_category"].isin(devices)]
+        entered = int(in_scope["sessions_entered"].sum())
+        baseline = in_scope["sessions_reached"].sum() / entered
+        revenue_per_point = sum(
+            row.sessions_entered
+            * 0.01
+            * purchase_rate[(row.device_category, PAYMENT_STEP)]
+            * device_order_value[row.device_category]
+            for row in in_scope.itertuples()
         )
+        for pace, factor in traffic_paces.items():
+            for weeks in test_weeks:
+                per_arm = int(entered * factor / export_days * 7 * weeks / 2)
+                lift = detectable_rate(baseline, per_arm) - baseline
+                rows.append(
+                    {
+                        "scope": scope,
+                        "traffic_pace": pace,
+                        "pace_factor": factor,
+                        "test_weeks": weeks,
+                        "sessions_per_arm": per_arm,
+                        "baseline_conversion": baseline,
+                        "detectable_lift_points": lift * 100,
+                        "revenue_per_point_usd": revenue_per_point,
+                        "revenue_at_detectable_lift_usd": revenue_per_point * lift * 100,
+                        "sessions_entering_in_sample": entered,
+                    }
+                )
     return pd.DataFrame(rows)
+
+
+def january_pace(daily_volume: pd.DataFrame) -> float:
+    """January's daily purchases as a share of the 92-day average.
+
+    January follows the holiday peak, so it is the closest the sample has to an ordinary month.
+    Assumption: sessions reaching checkout move with purchases.
+    """
+    january = daily_volume[daily_volume["event_day"].astype(str).str.startswith("2021-01")]
+    return january["purchase_events"].mean() / daily_volume["purchase_events"].mean()
 
 
 def coupon_holdout_test(
@@ -115,9 +138,11 @@ def coupon_holdout_test(
 ) -> pd.DataFrame:
     """What a coupon holdout among first-time buyers can confirm, using 30-day repeat purchase.
 
-    Assumptions: buyers arrive at the sample's daily rate, half of them in each arm. The first
-    figure takes the observed difference as the true one; the second gives the smallest
-    difference a holdout of holdout_days can detect.
+    Assumptions: buyers arrive at buyers_per_day, half of them in each arm, and every buyer in
+    the coupon arm is affected. Both figures are optimistic: in a real holdout only the share of
+    buyers who would use a code is affected, which dilutes the difference, and buyers_per_day
+    from this sample includes the holiday peak. The first figure takes the observed difference
+    as the true one; the second is the smallest difference a holdout of holdout_days can detect.
     """
     row = coupon_difference[coupon_difference["window_days"] == 30].iloc[0]
     per_arm = sessions_per_arm(row["no_coupon_repeat_rate"], row["coupon_repeat_rate"])
@@ -130,6 +155,7 @@ def coupon_holdout_test(
                 "no_coupon_repeat_rate": row["no_coupon_repeat_rate"],
                 "coupon_repeat_rate": row["coupon_repeat_rate"],
                 "buyers_per_arm_for_observed_difference": per_arm,
+                "buyers_per_day": buyers_per_day,
                 "days_of_first_time_buyers_needed": 2 * per_arm / buyers_per_day,
                 "holdout_days": holdout_days,
                 "holdout_buyers_per_arm": holdout_per_arm,
