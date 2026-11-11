@@ -71,10 +71,39 @@ main li,
   margin: -0.25rem 0 1.25rem;
 }
 
+.byline p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 0.25rem;
+}
+
 .nav-footer {
   font-size: 0.875rem;
   color: $text-muted;
   border-top: 1px solid $border-color;
+}
+
+// Profile logos: 44 px targets, ink colour (blue is reserved for mobile in the charts).
+.nav-footer .nav-link,
+.profile-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  color: $body-color;
+  text-decoration: none;
+}
+
+.nav-footer .bi,
+.profile-link .bi {
+  font-size: 1.25rem;
+}
+
+.nav-footer .nav-link:hover,
+.profile-link:hover {
+  color: #000000;
 }
 
 .source-line {
