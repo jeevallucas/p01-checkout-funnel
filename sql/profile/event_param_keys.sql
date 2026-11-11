@@ -8,4 +8,4 @@ select
 from `bigquery-public-data.ga4_obfuscated_sample_ecommerce.events_*`,
     unnest(event_params) as event_param
 group by param_key
-order by events desc
+order by events desc, param_key asc

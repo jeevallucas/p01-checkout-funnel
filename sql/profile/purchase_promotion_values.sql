@@ -35,4 +35,4 @@ select
     count(*) as purchase_events
 from purchase_field
 group by field_name, field_value
-order by field_name asc, purchase_events desc
+order by field_name asc, purchase_events desc, field_value asc

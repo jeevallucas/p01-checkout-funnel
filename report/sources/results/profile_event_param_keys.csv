@@ -1,7 +1,7 @@
 param_key,events,event_names,sample_event_names
-page_location,4295584,17,"add_payment_info,add_shipping_info,add_to_cart,begin_checkout,click,first_visit,page_view,purchase"
 ga_session_id,4295584,17,"add_payment_info,add_shipping_info,add_to_cart,begin_checkout,click,first_visit,page_view,purchase"
 ga_session_number,4295584,17,"add_payment_info,add_shipping_info,add_to_cart,begin_checkout,click,first_visit,page_view,purchase"
+page_location,4295584,17,"add_payment_info,add_shipping_info,add_to_cart,begin_checkout,click,first_visit,page_view,purchase"
 page_title,4276104,17,"add_payment_info,add_shipping_info,add_to_cart,begin_checkout,click,first_visit,page_view,purchase"
 engaged_session_event,4116237,17,"add_payment_info,add_shipping_info,add_to_cart,begin_checkout,click,first_visit,page_view,purchase"
 session_engaged,3996312,17,"add_payment_info,add_shipping_info,add_to_cart,begin_checkout,click,first_visit,page_view,purchase"
@@ -22,14 +22,14 @@ currency,39313,3,"add_payment_info,add_shipping_info,purchase"
 search_term,26172,1,view_search_results
 unique_search_term,20967,1,view_search_results
 dclid,15701,8,"add_to_cart,page_view,scroll,select_item,user_engagement,view_item,view_item_list,view_promotion"
-transaction_id,5242,1,purchase
 payment_type,5242,1,purchase
 tax,5242,1,purchase
+transaction_id,5242,1,purchase
 value,5242,1,purchase
 shipping_tier,4159,1,purchase
 coupon,3075,1,purchase
 promotion_name,2270,1,purchase
-outbound,1446,1,click
 link_domain,1446,1,click
 link_url,1446,1,click
+outbound,1446,1,click
 link_classes,6,1,click

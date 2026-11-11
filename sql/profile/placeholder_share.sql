@@ -38,4 +38,4 @@ select
     count(*) as events
 from grouping_field
 group by field_name, value_class
-order by field_name asc, events desc
+order by field_name asc, events desc, value_class asc

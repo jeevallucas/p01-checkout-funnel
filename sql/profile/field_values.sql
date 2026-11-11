@@ -29,7 +29,9 @@ ranked_value as (
         shown_value,
         events,
         users,
-        row_number() over (partition by field_name order by events desc) as value_rank
+        row_number() over (
+            partition by field_name order by events desc, shown_value asc
+        ) as value_rank
     from value_count
 )
 
@@ -40,4 +42,4 @@ select
     users
 from ranked_value
 where value_rank <= 15
-order by field_name asc, events desc
+order by field_name asc, events desc, field_value asc
