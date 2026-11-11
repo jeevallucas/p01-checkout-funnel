@@ -150,3 +150,16 @@ revisit it.
   itself the decision-relevant result.
 - Revisit if: a sample from after the store's checkout changes, or with more mobile sessions,
   shows an interval that excludes zero.
+
+## 2026-11-11 Recommend an 8-week payment-step test
+
+- Context: the memo's first recommendation needs a test the team can run inside one quarter.
+  `sizing_payment_step.csv` gives the smallest lift each length can detect at the sample's
+  traffic: 4 weeks 4.6 points, 8 weeks 3.3 points, 12 weeks 2.7 points.
+- Options: 4, 8, or 12 weeks.
+- Decision: 8 weeks. Four weeks only detects lifts larger than most checkout changes produce; 12
+  weeks leaves no time in the quarter to ship the winner.
+- Consequences: a true lift below 3.3 points will usually read as "no difference", so the memo
+  asks for a change bold enough to move the step by that much.
+- Revisit if: traffic during the test is clearly higher or lower than the sample's daily
+  average.
