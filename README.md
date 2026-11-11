@@ -3,6 +3,8 @@
 An analysis that tells the growth lead of an online merchandise store which checkout step to fund
 next quarter, and whether coupon buyers come back as often as other first-time buyers.
 
+By Putu Jeevallucas Jnanamaitriya Surya Gautama ([@jeevallucas](https://github.com/jeevallucas)).
+
 [![CI](https://github.com/jeevallucas/p01-checkout-funnel/actions/workflows/ci.yml/badge.svg)](https://github.com/jeevallucas/p01-checkout-funnel/actions/workflows/ci.yml)
 [![Report](https://github.com/jeevallucas/p01-checkout-funnel/actions/workflows/report.yml/badge.svg)](https://jeevallucas.github.io/p01-checkout-funnel/)
 [![Licence: MIT](https://img.shields.io/badge/licence-MIT-informational)](LICENSE)

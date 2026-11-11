@@ -51,6 +51,10 @@ gapLow = Math.min(...gaps.map((row) => row.gap_low))
 gapHigh = Math.max(...gaps.map((row) => row.gap_high))
 ```
 
+::: {.byline}
+By Putu Jeevallucas Jnanamaitriya Surya Gautama ([GitHub](https://github.com/jeevallucas)), November 2026.
+:::
+
 ::: {.lede}
 No checkout step shows a clear difference between mobile and desktop shoppers. Inside checkout,
 the largest loss is before payment: ${formatPercent(paymentStop)} of sessions that add shipping

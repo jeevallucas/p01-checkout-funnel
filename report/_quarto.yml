@@ -29,6 +29,9 @@ website:
     right:
       - text: Source code
         href: https://github.com/jeevallucas/p01-checkout-funnel
+  page-footer:
+    left: "© 2026 Putu Jeevallucas Jnanamaitriya Surya Gautama. Code under the MIT licence."
+    right: "[GitHub: jeevallucas](https://github.com/jeevallucas)"
 
 format:
   html:
@@ -38,6 +41,7 @@ format:
     grid:
       body-width: 960px
     lang: en
+    author-meta: "Putu Jeevallucas Jnanamaitriya Surya Gautama"
     smooth-scroll: false
     anchor-sections: false
     link-external-icon: false
